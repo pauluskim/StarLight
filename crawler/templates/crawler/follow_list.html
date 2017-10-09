@@ -1,0 +1,33 @@
+{% extends 'crawler/base.html' %}
+
+{% block content %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Target User PK</th>
+          <th>follow_status["ing"/"ed"]</th>
+          <th>by username</th>
+          <th>user pk</th>
+          <th>is verified?</th>
+          <th>is private?</th>
+          <th>is_favorite</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for follow in follow_list %}
+            <tr>
+              <td>{{ follow.object_pk }}</td>
+              <td>{{ follow.follow_status }}</td>
+              <td>{{ follow.username }}</td>
+              <td>{{ follow.user_pk }}</td>
+              <td>{{ follow.is_verified }}</td>
+              <td>{{ follow.is_private }}</td>
+              <td>{{ follow.is_favorite }}</td>
+            </tr>
+        {% endfor%}
+      </tbody>
+    </table>
+{% endblock %}
+
+
+
