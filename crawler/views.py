@@ -103,10 +103,13 @@ def followers(request, target_user_pk):
             if "is_favorite" in follower: follow.is_favorite = follower["is_favorite"]
             else: follow.is_favorite = False
             follow.save()
-            
-        max_id = followers["next_max_id"]
         
-    return JsonResponse({'max_id': followers["next_max_id"]})
+        if "next_max_id" in followers:
+            max_id = followers["next_max_id"]
+        else:
+            max_id = "end"
+        
+    return JsonResponse({'max_id': max_id})
 
 def follow_list(request):
     follow_list = Follow.objects.order_by('created_date')
