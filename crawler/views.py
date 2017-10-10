@@ -11,7 +11,7 @@ from crawler.models import Influencer, Post, User, Follow
 import pdb, datetime, csv
 from django.utils import timezone
 
-id_pwd = [["_______jack______", "ghdlWk37qkqk*"], ['bysps', '$23&6MAIE@3z'], ["sicily_hongdae", "CKo3umV0WG1Q"], ["hwangba8959", "ghkdqk^*"], ["sunbum7661", "tnsqjadl^*"], ['guha1770', 'rbgk^*'], ['changwook4950', 'ckddnrdl^*'], ['jaehyung2644', 'woguddl^*'], ['minvirus716', 'als951753'], ["hongsik1403", "ghdtlrdl^*"]]
+id_pwd = [["_______jack______", "ghdlWk37qkqk*"], ["sicily_hongdae", "CKo3umV0WG1Q"], ["hwangba8959", "ghkdqk^*"], ["sunbum7661", "tnsqjadl^*"], ['guha1770', 'rbgk^*'], ['changwook4950', 'ckddnrdl^*'], ['jaehyung2644', 'woguddl^*'], ['minvirus716', 'als951753'], ["hongsik1403", "ghdtlrdl^*"], ['bysps', '$23&6MAIE@3z']]
 
 api = InstagramAPI(id_pwd[0][0], id_pwd[0][1])
 api.login() # login
@@ -50,6 +50,7 @@ def user_follow(request):
     
     while max_id != "end":
         while True:
+            
             crawler_domain = "https://starlite-data-"+str(crawler_index)+"-jaegyunkim25.c9users.io"
             response = requests.get(crawler_domain+"/crawl/followers/"+str(target_user_pk)+"/?max_id="+max_id)
             try:
@@ -57,13 +58,15 @@ def user_follow(request):
                 break
             except:
                 print "Some json data is wrong."
+                print response
+                print response.text
                 crawler_index = (crawler_index + 1) % num_crawler
                 time.sleep(5)
                 continue
             
         max_id = json_response["max_id"]
         crawler_index = (crawler_index + 1) % num_crawler
-        time.sleep(5)
+        time.sleep(3)
     
     return HttpResponseRedirect('/crawl/follow_list')
     
@@ -93,16 +96,17 @@ def user_by_name(username):
 def followers(request, target_user_pk):
     max_id = request.GET.get('max_id', '')
     
-    for i in range(50):
+    for i in range(30):
         print i
-        while True:
-            try:
-                if max_id == "": api.getUserFollowers(target_user_pk)
-                else: api.getUserFollowers(target_user_pk, maxid=max_id)
-                followers = api.LastJson
-                break
-            except:
-                return JsonResponse({'max_id': max_id})
+        
+        try:
+            if max_id == "": api.getUserFollowers(target_user_pk)
+            else: api.getUserFollowers(target_user_pk, maxid=max_id)
+            followers = api.LastJson
+        except:
+            print "api response is wrong so return."
+            return JsonResponse({'max_id': max_id})
+            
         for follower in followers["users"]:
             if Follow.objects.filter(user_pk = follower["pk"], object_pk = target_user_pk).exists(): continue
             follow = Follow(created_date=timezone.now())
@@ -128,7 +132,6 @@ def followers(request, target_user_pk):
 def follow_list(request):
     follow_list = Follow.objects.order_by('created_date')
     return render(request, 'crawler/follow_list.html', {'follow_list': follow_list})
-    
 
         
     
