@@ -6,71 +6,112 @@ sys.setdefaultencoding('utf-8')
 
 from django.shortcuts import render
 from insta_hashtag_crawler import *
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from crawler.models import Influencer, Post, User, Follow
-import pdb, datetime
+import pdb, datetime, csv
 from django.utils import timezone
-from django.http import HttpResponseRedirect
 
-api = InstagramAPI('_______jack______', 'ghdlWk37qkqk*')
-api.login() # login
+id_pwd = [["_______jack______", "ghdlWk37qkqk*"], ["hwangba8959", "ghkdqk^*"], ["sunbum7661", "tnsqjadl^*"], ['guha1770', 'rbgk^*'], ['changwook4950', 'ckddnrdl^*'], ['jaehyung2644', 'woguddl^*'], ['minvirus716', 'als951753'], ["hongsik1403", "ghdtlrdl^*"], ["sicily_hongdae", "CKo3umV0WG1Q"]]
+
+#api = InstagramAPI('_______jack______', 'ghdlWk37qkqk*')
+#api.login() # login
     
-def save_data(request):
-    pass
-
 def influencer_list(request):
     influencers = Influencer.objects.order_by('created_date')
     return render(request, 'crawler/influencer_list.html', {'influencers': influencers})
     
-def crawl_user_info(request):
-    user_id = request.GET.get('user_id', '')
-    num_followers = investigate_user(user_id)
-    return JsonResponse({"num_followers":num_followers})
+def export_follow_csv(request):
+    # Create the HttpResponse object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="follow.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['target user pk', 'ing/ed', 'by username', 'user pk', 'is verified', 'is private', 'is favorite'])
+    
+    follows = Follow.objects.all()
+    for follow in follows:
+        line_list = [follow.object_pk, follow.follow_status, follow.username, follow.user_pk, follow.is_verified, follow.is_private, follow.is_favorite]
+        line_list = [str(ele) for ele in line_list]
+        writer.writerow(line_list)
+
+    return response    
     
 
-def crawl_manager(request):
+def user_follow(request):
+    target_username= request.GET.get('username', '')
+    if target_username == "": return HttpResponseRedirect("/crawl/follow_list")
+    
+    target_user_pk = user_by_name(target_username).user_pk
+    
+    num_crawler = 9
+    crawler_index = 0
+    
     max_id = "start"
-    # hoyatayo
-    target_user_pk = 437374249
     while max_id != "end":
-        if max_id == "start":
-            response = requests.get("https://starlite-data-1-jaegyunkim25.c9users.io/crawl/followers/"+str(target_user_pk)+"/")
-            #response = requests.get("https://starlite-data-1-jaegyunkim25.c9users.io/crawl/hashtag_posts/도시락/")
-        else: 
-            response = requests.get("https://starlite-data-1-jaegyunkim25.c9users.io/crawl/followers/"+str(target_user_pk)+"/?max+id="+max_id)
-            #response = requests.get("https://starlite-data-1-jaegyunkim25.c9users.io/crawl/hashtag_posts/도시락/?max_id="+max_id)
+        crawler_domain = "https://starlite-data-"+str(crawler_index)+"-jaegyunkim25.c9users.io"
+        if max_id == "start": response = requests.get(crawler_domain+"/crawl/followers/"+str(target_user_pk)+"/")
+        else: response = requests.get(crawler_domain+"/crawl/followers/"+str(target_user_pk)+"/?max+id="+max_id)
+        
         json_response = json.loads(response.text)
         max_id = json_response["max_id"]
-        #api.getHashtagFeed(hashtag, maxid=max_id)    
+        crawler_index = (crawler_index + 1) % num_crawler
+        time.sleep(5)
     
     return HttpResponseRedirect('/crawl/follow_list')
+    
+def user_by_name(username):
+    if User.objects.filter(username = username).exists():
+        return User.objects.filter(username = username)
+    else:
+        api.searchUsername(username)
+        user_info = api.LastJson["user"]
+        user = User(created_date=timezone.now())
+        user.username = user_info["username"]
+        user.usertags_count = user_info["usertags_count"]
+        user.media_count = user_info["media_count"]
+        user.following_count = user_info["following_count"]
+        user.follower_count = user_info["follower_count"]
+        user.is_business = user_info["is_business"]
+        user.has_chaining = user_info["has_chaining"]
+        user.geo_media_count = user_info["geo_media_count"]
+        user.user_pk = user_info["pk"]
+        user.is_verified = user_info["is_verified"]
+        user.is_private = user_info["is_private"]
+        user.is_favorite = user_info["is_favorite"]
+        user.external_url = user_info["external_url"]
+        user.save()
+        return user
 
 def followers(request, target_user_pk):
     max_id = request.GET.get('max_id', '')
-    if max_id == "": api.getUserFollowers(target_user_pk)
-    else: api.getUserFollowers(pk, maxid=max_id)
-    followers = api.LastJson
     
-    for follower in followers["users"]:
-        if Follow.objects.filter(user_pk = follower["pk"]).exists(): continue
-        follow = Follow(created_date=timezone.now())
-        follow.object_pk = target_user_pk
-        follow.follow_status = 'ed'
-        follow.username = follower["username"]
-        follow.full_name = follower["full_name"]
-        follow.user_pk = follower["pk"]
-        follow.is_verified = follower["is_verified"]
-        follow.is_private = follower["is_private"]
-        if "is_favorite" in follower: follow.is_favorite = follower["is_favorite"]
-        else: follow.is_favorite = False
-        follow.save()
+    for i in range(50):
+        if max_id == "": api.getUserFollowers(target_user_pk)
+        else: api.getUserFollowers(pk, maxid=max_id)
+        followers = api.LastJson
+        
+        for follower in followers["users"]:
+            if Follow.objects.filter(user_pk = follower["pk"]).exists(): continue
+            follow = Follow(created_date=timezone.now())
+            follow.object_pk = target_user_pk
+            follow.follow_status = 'ed'
+            follow.username = follower["username"]
+            follow.full_name = follower["full_name"]
+            follow.user_pk = follower["pk"]
+            follow.is_verified = follower["is_verified"]
+            follow.is_private = follower["is_private"]
+            if "is_favorite" in follower: follow.is_favorite = follower["is_favorite"]
+            else: follow.is_favorite = False
+            follow.save()
         
     return JsonResponse({'max_id': followers["next_max_id"]})
 
 def follow_list(request):
-    
     follow_list = Follow.objects.order_by('created_date')
     return render(request, 'crawler/follow_list.html', {'follow_list': follow_list})
+    
+
+        
     
 def crawl_hashtag_posts(request):
     hashtag = request.GET.get("hashtag", '')

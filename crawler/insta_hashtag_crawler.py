@@ -29,7 +29,6 @@ def visted(result_file, progress_file):
 
 def investigate_user(user_id):
     #if user_id in visited_influ_set: 
-    print user_id
     api.searchUsername(user_id)
     print api.LastJson
     print api.LastResponse

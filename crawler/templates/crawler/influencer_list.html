@@ -1,22 +1,23 @@
 {% extends 'crawler/base.html' %}
 
 {% block content %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Number of followers</th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for influ in influencers %}
-            <tr>
-              <td>{{ influ.user_id }}</td>
-              <td>{{ influ.num_followers }}</td>
-            </tr>
-        {% endfor%}
-      </tbody>
-    </table>
+  <!-- Export data via csv -->  
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Number of followers</th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for influ in influencers %}
+          <tr>
+            <td>{{ influ.user_id }}</td>
+            <td>{{ influ.num_followers }}</td>
+          </tr>
+      {% endfor%}
+    </tbody>
+  </table>
 {% endblock %}
 
 
