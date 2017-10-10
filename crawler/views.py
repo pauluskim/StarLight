@@ -90,7 +90,6 @@ def followers(request, target_user_pk):
         if max_id == "": api.getUserFollowers(target_user_pk)
         else: api.getUserFollowers(target_user_pk, maxid=max_id)
         followers = api.LastJson
-        
         for follower in followers["users"]:
             if Follow.objects.filter(user_pk = follower["pk"], object_pk = target_user_pk).exists(): continue
             follow = Follow(created_date=timezone.now())
@@ -104,6 +103,8 @@ def followers(request, target_user_pk):
             if "is_favorite" in follower: follow.is_favorite = follower["is_favorite"]
             else: follow.is_favorite = False
             follow.save()
+            
+        max_id = followers["next_max_id"]
         
     return JsonResponse({'max_id': followers["next_max_id"]})
 
