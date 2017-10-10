@@ -13,8 +13,8 @@ from django.utils import timezone
 
 id_pwd = [["_______jack______", "ghdlWk37qkqk*"], ["hwangba8959", "ghkdqk^*"], ["sunbum7661", "tnsqjadl^*"], ['guha1770', 'rbgk^*'], ['changwook4950', 'ckddnrdl^*'], ['jaehyung2644', 'woguddl^*'], ['minvirus716', 'als951753'], ["hongsik1403", "ghdtlrdl^*"], ["sicily_hongdae", "CKo3umV0WG1Q"]]
 
-#api = InstagramAPI('_______jack______', 'ghdlWk37qkqk*')
-#api.login() # login
+api = InstagramAPI(id_pwd[0][0], id_pwd[0][1])
+api.login() # login
     
 def influencer_list(request):
     influencers = Influencer.objects.order_by('created_date')
@@ -43,7 +43,7 @@ def user_follow(request):
     
     target_user_pk = user_by_name(target_username).user_pk
     
-    num_crawler = 9
+    num_crawler = 3
     crawler_index = 0
     
     max_id = "start"
@@ -61,7 +61,7 @@ def user_follow(request):
     
 def user_by_name(username):
     if User.objects.filter(username = username).exists():
-        return User.objects.filter(username = username)
+        return User.objects.get(username = username)
     else:
         api.searchUsername(username)
         user_info = api.LastJson["user"]
