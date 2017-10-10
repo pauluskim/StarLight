@@ -14,7 +14,7 @@ class User(models.Model):
     is_business = models.BooleanField()
     has_chaining = models.BooleanField()
     geo_media_count = models.IntegerField(null=True)
-    user_pk = models.IntegerField()
+    user_pk = models.BigIntegerField()
     is_verified = models.BooleanField()
     is_private = models.BooleanField()
     is_favorite = models.BooleanField()

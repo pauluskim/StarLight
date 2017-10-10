@@ -86,12 +86,13 @@ def followers(request, target_user_pk):
     max_id = request.GET.get('max_id', '')
     
     for i in range(50):
+        print i
         if max_id == "": api.getUserFollowers(target_user_pk)
-        else: api.getUserFollowers(pk, maxid=max_id)
+        else: api.getUserFollowers(target_user_pk, maxid=max_id)
         followers = api.LastJson
         
         for follower in followers["users"]:
-            if Follow.objects.filter(user_pk = follower["pk"]).exists(): continue
+            if Follow.objects.filter(user_pk = follower["pk"], object_pk = target_user_pk).exists(): continue
             follow = Follow(created_date=timezone.now())
             follow.object_pk = target_user_pk
             follow.follow_status = 'ed'
