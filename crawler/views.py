@@ -11,7 +11,7 @@ from crawler.models import Influencer, Post, User, Follow
 import pdb, datetime, csv
 from django.utils import timezone
 
-id_pwd = [["_______jack______", "ghdlWk37qkqk*"], ["hwangba8959", "ghkdqk^*"], ["sunbum7661", "tnsqjadl^*"], ['guha1770', 'rbgk^*'], ['changwook4950', 'ckddnrdl^*'], ['jaehyung2644', 'woguddl^*'], ['minvirus716', 'als951753'], ["hongsik1403", "ghdtlrdl^*"], ["sicily_hongdae", "CKo3umV0WG1Q"]]
+id_pwd = [["_______jack______", "ghdlWk37qkqk*"], ['bysps', '$23&6MAIE@3z'], ["sicily_hongdae", "CKo3umV0WG1Q"], ["hwangba8959", "ghkdqk^*"], ["sunbum7661", "tnsqjadl^*"], ['guha1770', 'rbgk^*'], ['changwook4950', 'ckddnrdl^*'], ['jaehyung2644', 'woguddl^*'], ['minvirus716', 'als951753'], ["hongsik1403", "ghdtlrdl^*"]]
 
 api = InstagramAPI(id_pwd[0][0], id_pwd[0][1])
 api.login() # login
@@ -55,7 +55,7 @@ def user_follow(request):
         json_response = json.loads(response.text)
         max_id = json_response["max_id"]
         crawler_index = (crawler_index + 1) % num_crawler
-        time.sleep(5)
+        time.sleep(0.2)
     
     return HttpResponseRedirect('/crawl/follow_list')
     
@@ -85,7 +85,7 @@ def user_by_name(username):
 def followers(request, target_user_pk):
     max_id = request.GET.get('max_id', '')
     
-    for i in range(50):
+    for i in range(2):
         print i
         if max_id == "": api.getUserFollowers(target_user_pk)
         else: api.getUserFollowers(target_user_pk, maxid=max_id)
