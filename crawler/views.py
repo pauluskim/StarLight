@@ -39,6 +39,8 @@ def export_follow_csv(request):
 
 def user_follow(request):
     target_username= request.GET.get('username', '')
+    max_id= request.GET.get('max_id', '')
+    
     if target_username == "": return HttpResponseRedirect("/crawl/follow_list")
     
     target_user_pk = user_by_name(target_username).user_pk
@@ -46,16 +48,22 @@ def user_follow(request):
     num_crawler = 3
     crawler_index = 0
     
-    max_id = "start"
     while max_id != "end":
-        crawler_domain = "https://starlite-data-"+str(crawler_index)+"-jaegyunkim25.c9users.io"
-        if max_id == "start": response = requests.get(crawler_domain+"/crawl/followers/"+str(target_user_pk)+"/")
-        else: response = requests.get(crawler_domain+"/crawl/followers/"+str(target_user_pk)+"/?max+id="+max_id)
-        
-        json_response = json.loads(response.text)
+        while True:
+            crawler_domain = "https://starlite-data-"+str(crawler_index)+"-jaegyunkim25.c9users.io"
+            response = requests.get(crawler_domain+"/crawl/followers/"+str(target_user_pk)+"/?max_id="+max_id)
+            try:
+                json_response = json.loads(response.text)
+                break
+            except:
+                print "Some json data is wrong."
+                crawler_index = (crawler_index + 1) % num_crawler
+                time.sleep(5)
+                continue
+            
         max_id = json_response["max_id"]
         crawler_index = (crawler_index + 1) % num_crawler
-        time.sleep(0.2)
+        time.sleep(5)
     
     return HttpResponseRedirect('/crawl/follow_list')
     
@@ -85,11 +93,16 @@ def user_by_name(username):
 def followers(request, target_user_pk):
     max_id = request.GET.get('max_id', '')
     
-    for i in range(2):
+    for i in range(50):
         print i
-        if max_id == "": api.getUserFollowers(target_user_pk)
-        else: api.getUserFollowers(target_user_pk, maxid=max_id)
-        followers = api.LastJson
+        while True:
+            try:
+                if max_id == "": api.getUserFollowers(target_user_pk)
+                else: api.getUserFollowers(target_user_pk, maxid=max_id)
+                followers = api.LastJson
+                break
+            except:
+                return JsonResponse({'max_id': max_id})
         for follower in followers["users"]:
             if Follow.objects.filter(user_pk = follower["pk"], object_pk = target_user_pk).exists(): continue
             follow = Follow(created_date=timezone.now())
@@ -108,6 +121,7 @@ def followers(request, target_user_pk):
             max_id = followers["next_max_id"]
         else:
             max_id = "end"
+            break
         
     return JsonResponse({'max_id': max_id})
 
