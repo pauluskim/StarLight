@@ -5,4 +5,9 @@ myvenv
 db.sqlite3
 /static
 README_c9.md
-/quix
+accessKeys.csv
+/starlight
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

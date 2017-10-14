@@ -5,13 +5,15 @@ sys.setdefaultencoding('utf-8')
 
 
 from django.shortcuts import render
-from insta_hashtag_crawler import *
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from crawler.models import Influencer, Post, User, Follow
-import pdb, datetime, csv
+import pdb, datetime, csv, os, sys
 from django.utils import timezone
 
 id_pwd = [["_______jack______", "ghdlWk37qkqk*"], ["hwangba8959", "ghkdqk^*"], ["sunbum7661", "tnsqjadl^*"], ['guha1770', 'rbgk^*'], ['changwook4950', 'ckddnrdl^*'], ['jaehyung2644', 'woguddl^*'], ['minvirus716', 'als951753'], ["hongsik1403", "ghdtlrdl^*"], ['bysps', '$23&6MAIE@3z'], ["sicily_hongdae", "CKo3umV0WG1Q"]]
+
+sys.path.append(os.path.abspath('./crawler/Instagram-API-python'))
+from InstagramAPI import InstagramAPI
 
 api = InstagramAPI(id_pwd[0][0], id_pwd[0][1])
 api.login() # login

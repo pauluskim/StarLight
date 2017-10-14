@@ -80,10 +80,10 @@ WSGI_APPLICATION = 'starlite_data_1.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'c9',
-        'USER': os.environ["C9_USER"],
-        'PASSWORD': '',
-        'HOST': os.environ["IP"],
+        'NAME': 'starlight',
+        'USER': 'root',
+        'PASSWORD': 'anjgkfurh',
+        'HOST': 'localhost',
         'PORT': '3306',
         
     }
