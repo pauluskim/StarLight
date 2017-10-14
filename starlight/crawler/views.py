@@ -7,7 +7,7 @@ sys.setdefaultencoding('utf-8')
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from crawler.models import Influencer, Post, User, Follow
-import pdb, datetime, csv, os, sys
+import pdb, datetime, csv, os, sys, requests
 from django.utils import timezone
 
 id_pwd = [["_______jack______", "ghdlWk37qkqk*"], ["hwangba8959", "ghkdqk^*"], ["sunbum7661", "tnsqjadl^*"], ['guha1770', 'rbgk^*'], ['changwook4950', 'ckddnrdl^*'], ['jaehyung2644', 'woguddl^*'], ['minvirus716', 'als951753'], ["hongsik1403", "ghdtlrdl^*"], ['bysps', '$23&6MAIE@3z'], ["sicily_hongdae", "CKo3umV0WG1Q"]]
@@ -90,7 +90,8 @@ def user_by_name(username):
         user.user_pk = user_info["pk"]
         user.is_verified = user_info["is_verified"]
         user.is_private = user_info["is_private"]
-        user.is_favorite = user_info["is_favorite"]
+        if "is_favorite" in user_info: user.is_favorite = user_info["is_favorite"]
+        else: user.is_favorite = False
         user.external_url = user_info["external_url"]
         user.save()
         return user
