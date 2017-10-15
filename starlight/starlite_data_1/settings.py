@@ -25,7 +25,7 @@ SECRET_KEY = 'a9idx4kvg_@^#)e#zt@4n-_t)pb&ilzy=io3u3^66+dxeled0&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '.pythonanywhere.com', 'starlite-data-1-jaegyunkim25.c9users.io']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]','starlight.v6v333xp7f.us-east-2.elasticbeanstalk.com']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'starlite_data_1.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'starlightdb',
+        'NAME': 'ebdb',
         'USER': 'root',
         'PASSWORD': 'roka2331',
         'HOST': 'starlightdb.cupqsbnuc8br.us-east-2.rds.amazonaws.com',
