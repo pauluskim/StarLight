@@ -9,14 +9,16 @@ from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from crawler.models import Influencer, Post, User, Follow
 import pdb, datetime, csv, os, sys, requests
 from django.utils import timezone
-
-id_pwd = [["_______jack______", "ghdlWk37qkqk*"], ["hwangba8959", "ghkdqk^*"], ["sunbum7661", "tnsqjadl^*"], ['guha1770', 'rbgk^*'], ['changwook4950', 'ckddnrdl^*'], ['jaehyung2644', 'woguddl^*'], ['minvirus716', 'als951753'], ["hongsik1403", "ghdtlrdl^*"], ['bysps', '$23&6MAIE@3z'], ["sicily_hongdae", "CKo3umV0WG1Q"]]
+from auth import *
 
 sys.path.append(os.path.abspath('./crawler/Instagram-API-python'))
 from InstagramAPI import InstagramAPI
 
-api = InstagramAPI(id_pwd[0][0], id_pwd[0][1])
+api = InstagramAPI(api_id, api_pwd)
 api.login() # login
+
+host_ip = str(requests.get('http://ip.42.pl/raw').text)
+ip_list = ['http://13.59.246.178/', 'http://18.220.183.168/', 'http://18.220.122.175/']
     
 def influencer_list(request):
     influencers = Influencer.objects.order_by('created_date')
@@ -40,6 +42,9 @@ def export_follow_csv(request):
     
 
 def user_follow(request):
+    global host_ip
+    global ip_list
+
     target_username= request.GET.get('username', '')
     max_id= request.GET.get('max_id', '')
     
@@ -47,13 +52,14 @@ def user_follow(request):
     
     target_user_pk = user_by_name(target_username).user_pk
     
-    num_crawler = 3
-    crawler_index = 0
+    crawler_domain = "http://"+host_ip+"/"
+
+    num_crawler = len(ip_list)
+    crawler_index = ip_list.index(crawler_domin)
     
     while max_id != "end":
         while True:
-            crawler_domain = "https://starlite-data-"+str(crawler_index)+"-jaegyunkim25.c9users.io"
-            response = requests.get(crawler_domain+"/crawl/followers/"+str(target_user_pk)+"/?max_id="+max_id)
+            response = requests.get(crawler_domain+"crawl/followers/"+str(target_user_pk)+"/?max_id="+max_id)
             print response
             try:
                 json_response = json.loads(response.text)
@@ -63,11 +69,13 @@ def user_follow(request):
                 print response
                 print response.text
                 crawler_index = (crawler_index + 1) % num_crawler
-                
+                crawler_domain = ip_list[crawler_index]
                 continue
             
         max_id = json_response["max_id"]
         crawler_index = (crawler_index + 1) % num_crawler
+        crawler_domain = ip_list[crawler_index]
+
         
     
     return HttpResponseRedirect('/crawl/follow_list')
