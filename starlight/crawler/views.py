@@ -7,7 +7,7 @@ sys.setdefaultencoding('utf-8')
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from crawler.models import Influencer, Post, User, Follow
-import pdb, datetime, csv, os, sys, requests
+import pdb, datetime, csv, os, sys, requests, json
 from django.utils import timezone
 from auth import *
 
@@ -55,7 +55,7 @@ def user_follow(request):
     crawler_domain = "http://"+host_ip+"/"
 
     num_crawler = len(ip_list)
-    crawler_index = ip_list.index(crawler_domin)
+    crawler_index = ip_list.index(crawler_domain)
     
     while max_id != "end":
         while True:
