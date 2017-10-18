@@ -83,7 +83,7 @@ DATABASES = {
         'NAME': 'starlight',
         'USER': 'jack',
         'PASSWORD': 'anjgkfurh',
-        'HOST': '18.216.40.26',
+        'HOST': '18.220.192.150',
         'PORT': '3306',
         
     }
