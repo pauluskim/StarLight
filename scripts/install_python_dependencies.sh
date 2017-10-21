@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
-sudo apt-get install python-mysqldb
+apt update
+apt-get install python-mysqldb
+apt-get install python-pip python-dev build-essential 
 pip install --upgrade pip
-pip install -r /home/ubuntu/webapps/starlight/requirements.txt
+pip install -r /home/ubuntu/StarLight/starlight/requirements.txt
