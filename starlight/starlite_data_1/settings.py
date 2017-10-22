@@ -25,7 +25,7 @@ SECRET_KEY = 'a9idx4kvg_@^#)e#zt@4n-_t)pb&ilzy=io3u3^66+dxeled0&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]','ec2-13-59-246-178.us-east-2.compute.amazonaws.com','ec2-18-220-183-168.us-east-2.compute.amazonaws.com','ec2-18-220-122-175.us-east-2.compute.amazonaws.com', '13.59.246.178', '18.220.183.168', '18.220.122.175']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]','ec2-13-56-240-85.us-west-1.compute.amazonaws.com', '13.56.240.85']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
@@ -83,7 +83,7 @@ DATABASES = {
         'NAME': 'starlight',
         'USER': 'jack',
         'PASSWORD': 'anjgkfurh',
-        'HOST': '18.220.192.150',
+        'HOST': '52.52.199.209',
         'PORT': '3306',
         
     }
