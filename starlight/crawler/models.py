@@ -56,6 +56,21 @@ class Influencer(models.Model):
     def __str__(self):
         return self.user_id
 
+class Hashtag_Dictionary(models.Model):
+    user_pk = models.BigIntegerField()
+    hashtag = models.TextField(null=True)
+    count = models.IntegerField(null=True)
+    code_list = models.TextField(null=True)
+    created_date = models.DateTimeField(default=timezone.now)
+
+    def add_count(self, volume, code):
+        self.count += 1
+        self.code_list += ','+code
+        self.save()
+
+    def __str__(self):
+        return self.hashtag
+
 class Post(models.Model):
     user_id = models.CharField(max_length=200)
     engagement_rate = models.DecimalField(max_digits=22, decimal_places=20, null=True)

@@ -6,7 +6,7 @@ sys.setdefaultencoding('utf-8')
 
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
-from crawler.models import Influencer, Post, User, Follow
+from crawler.models import Influencer, Post, User, Follow, Hashtag_Dictionary
 import pdb, datetime, csv, os, sys, requests, json
 from django.utils import timezone
 from auth import *
@@ -18,7 +18,8 @@ api = InstagramAPI(api_id, api_pwd)
 api.login() # login
 
 host_ip = str(requests.get('http://ip.42.pl/raw').text)
-ip_list = ['http://13.59.246.178/', 'http://18.220.183.168/', 'http://18.220.122.175/']
+ip_list = ['http://13.56.240.85/', 'http://13.57.16.83/']
+#ip_list = ['http://13.56.240.85/', 'http://13.57.16.83/', 'http://13.57.12.106/', 'http://54.183.65.48/', 'http://52.53.255.11/']
     
 def influencer_list(request):
     influencers = Influencer.objects.order_by('created_date')
@@ -55,7 +56,9 @@ def user_follow(request):
     crawler_domain = "http://"+host_ip+"/"
 
     num_crawler = len(ip_list)
-    crawler_index = ip_list.index(crawler_domain)
+    #crawler_index = ip_list.index(crawler_domain)
+    crawler_index = 0 
+    # For develop in local.
     
     while max_id != "end":
         while True:
@@ -79,7 +82,81 @@ def user_follow(request):
         
     
     return HttpResponseRedirect('/crawl/follow_list')
-    
+
+def start_hashtag_dictionary(request):
+    username = request.GET.get('username', '')
+    influencer = user_by_name(username)
+    hashtag_dictionary(username, influencer.user_pk)
+
+    followers = Follow.objects.get(object_pk=influencer.user_pk, follow_status='ed')
+    for follower in followers:
+        hashtag_dictionary(follower.username, follower.user_pk)
+        
+
+    # Take a follower to get hashtag list.
+
+def hashtag_dictionary(username, user_pk):
+    global ip_list
+    num_crawler = len(ip_list)
+    crawler_index = 0
+
+    curl_url = "https://www.instagram.com/"+username+"/?__a=1"
+    response = requests.get(curl_url)
+    media_json = response.json()["user"]["media"]
+
+    for node in media_json["nodes"]:
+        media_id = node["id"]
+        url_code = node["code"]
+
+        #if "caption" in node: hash_tag_count = node["caption"].count("#")
+        if "caption" in node:
+            caption_hashtag_list = extract_hash_tags(node["caption"])
+            for hashtag in caption_hashtag_list:
+                save_hashtag_dic(user_pk, hashtag, url_code)
+
+        crawler_domain = ip_list[crawler_index]
+        requests.get(crawler_domain+"crawl/api_hashtag_dic/?media_id="+media_id+"&user_pk="+user_pk+"&url_code="+url_code)
+        crawler_index = (crawler_index + 1) % num_crawler
+
+
+def api_hashtag_dic(request):
+    media_id = request.GET.get('media_id', '')
+    user_pk = request.GET.get('user_pk', '')
+    url_code = request.GET.get('url_code', '')
+
+    api.getMediaComments(media_id)
+    response_json = api.LastJson
+    comments = response_json['comments']
+
+    for comment in comments:
+        if user_pk == comment['user_id']:
+            influ_comments = comment['text']
+            comment_hashtag_list = extract_hash_tags(influ_comments)
+            for hashtag in comment_hashtag_list:
+                save_hashtag_dic(user_pk, hashtag, url_code)
+
+def save_hashtag_dic(user_pk, hashtag, url_code):
+    if Hashtag_Dictionary.objects.filter(hashtag = hashtag, user_pk = user_pk).exists():
+        hashtag_dic = Hashtag_Dictionary.objects.get(hashtag = hashtag, user_pk = user_pk)
+        if not url_code in hashtag_dic.code_list:
+            hashtag_dic.add_count(1, url_code)
+    else:
+        hashtag_dic             = Hashtag_Dictionary(created_date=timezone.now())
+        hashtag_dic.user_pk     = user_pk
+        hashtag_dic.hashtag     = hashtag
+        hashtag_dic.count       = 1 
+        hashtag_dic.code_list   = url_code
+        try:
+            hashtag_dic.save()
+        except:
+            print '!!!!!!!!!!!!!!!!!!'
+            print hashtag
+            print '!!!!!!!!!!!!!!!!!!'
+
+def extract_hash_tags(s):
+    return set(part[1:] for part in s.split() if part.startswith('#'))
+
+
 def user_by_name(username):
     if User.objects.filter(username = username).exists():
         return User.objects.get(username = username)
@@ -136,7 +213,7 @@ def followers(request, target_user_pk):
     return JsonResponse({'max_id': max_id})
 
 def follow_list(request):
-    follow_list = Follow.objects.order_by('created_date')
+    follow_list = Follow.objects.order_by('created_date')[:10]
     return render(request, 'crawler/follow_list.html', {'follow_list': follow_list})
 
         

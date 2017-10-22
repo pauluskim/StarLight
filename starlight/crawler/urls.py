@@ -10,4 +10,6 @@ urlpatterns = [
     #url(r'^crawl/manager$', views.crawl_manager, name='crawl_manager'),
     url(r'^crawl/follow_list$', views.follow_list, name='follow_list'),
     url(r'^crawl/export_follow_csv$', views.export_follow_csv, name='export_follow_csv'),
+    url(r'^crawl/hashtag_dic$', views.start_hashtag_dictionary, name='hashtag_dictionary'),
+    url(r'^crawl/api_hashtag_dic$', views.api_hashtag_dic, name='api_hashtag_dictionary'),
 ]
