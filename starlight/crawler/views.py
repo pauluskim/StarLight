@@ -89,7 +89,7 @@ def start_hashtag_dictionary(request):
     influencer = user_by_name(username)
     hashtag_dictionary(username, influencer.user_pk)
 
-    followers = Follow.objects.get(object_pk=influencer.user_pk, follow_status='ed')
+    followers = Follow.objects.filter(object_pk=influencer.user_pk, follow_status='ed')
     for follower in followers:
         hashtag_dictionary(follower.username, follower.user_pk)
         
