@@ -101,7 +101,9 @@ def start_hashtag_dictionary(request):
         for user in response_json['users']:
             likers.add((user['username'], user['pk']))
 
-    for liker in likers:
+    total_liker_number = len(likers)
+    for num, liker in enumerate(likers):
+        print "/".join((str(num), str(total_liker_number)))
         hashtag_dictionary(liker[0], liker[1])
         
 
