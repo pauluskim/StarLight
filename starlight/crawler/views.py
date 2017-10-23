@@ -89,9 +89,20 @@ def start_hashtag_dictionary(request):
     influencer = user_by_name(username)
     hashtag_dictionary(username, influencer.user_pk)
 
-    followers = Follow.objects.filter(object_pk=influencer.user_pk, follow_status='ed')
-    for follower in followers:
-        hashtag_dictionary(follower.username, follower.user_pk)
+    curl_url = "https://www.instagram.com/"+username+"/?__a=1"
+    response = requests.get(curl_url)
+    media_json = response.json()["user"]["media"]
+
+    likers = set()
+    for node in media_json["nodes"]:
+        media_id = node["id"]
+        api.getMediaLikers(media_id)
+        response_json = api.LastJson
+        for user in response_json['users']:
+            likers.add((user['username'], user['pk']))
+
+    for liker in likers:
+        hashtag_dictionary(liker[0], liker[1])
         
 
     # Take a follower to get hashtag list.
