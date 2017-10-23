@@ -107,7 +107,8 @@ def hashtag_dictionary(username, user_pk):
         media_json = response.json()["user"]["media"]
     except:
         print response
-        print response.json()
+        return True
+        # It should be fixed if these code is very necessary.
 
     for node in media_json["nodes"]:
         media_id = node["id"]
