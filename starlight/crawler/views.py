@@ -18,7 +18,7 @@ api = InstagramAPI(api_id, api_pwd)
 api.login() # login
 
 host_ip = str(requests.get('http://ip.42.pl/raw').text)
-#ip_list = ['http://13.56.240.85/', 'http://13.57.16.83/']
+#ip_list = ['http://localhost:8000/']
 ip_list = ['http://13.56.240.85/', 'http://13.57.16.83/', 'http://13.57.12.106/', 'http://54.183.65.48/', 'http://52.53.255.11/']
 # 2, 1, 3, 5, 4
     
@@ -103,7 +103,11 @@ def hashtag_dictionary(username, user_pk):
 
     curl_url = "https://www.instagram.com/"+username+"/?__a=1"
     response = requests.get(curl_url)
-    media_json = response.json()["user"]["media"]
+    try:
+        media_json = response.json()["user"]["media"]
+    except:
+        print response
+        print response.json()
 
     for node in media_json["nodes"]:
         media_id = node["id"]
@@ -116,7 +120,7 @@ def hashtag_dictionary(username, user_pk):
                 save_hashtag_dic(user_pk, hashtag, url_code)
 
         crawler_domain = ip_list[crawler_index]
-        requests.get("{crawler_domain}crawl/api_hashtag_dic/?media_id={media_id}&user_pk={user_pk}&url_code={url_code}".format(crawler_domain=crawler_domain, media_id=media_id, user_pk=user_pk, url_code=url_code))
+        requests.get("{crawler_domain}crawl/api_hashtag_dic?media_id={media_id}&user_pk={user_pk}&url_code={url_code}".format(crawler_domain=crawler_domain, media_id=media_id, user_pk=user_pk, url_code=url_code))
         crawler_index = (crawler_index + 1) % num_crawler
 
 
@@ -127,6 +131,8 @@ def api_hashtag_dic(request):
 
     api.getMediaComments(media_id)
     response_json = api.LastJson
+
+    if not 'comments' in response_json: return JsonResponse({'success': 'no comments'})
     comments = response_json['comments']
 
     for comment in comments:
@@ -135,6 +141,8 @@ def api_hashtag_dic(request):
             comment_hashtag_list = extract_hash_tags(influ_comments)
             for hashtag in comment_hashtag_list:
                 save_hashtag_dic(user_pk, hashtag, url_code)
+
+    return JsonResponse({'success': True})
 
 def save_hashtag_dic(user_pk, hashtag, url_code):
     if Hashtag_Dictionary.objects.filter(hashtag = hashtag, user_pk = user_pk).exists():
