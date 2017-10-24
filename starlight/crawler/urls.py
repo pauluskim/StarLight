@@ -12,4 +12,5 @@ urlpatterns = [
     url(r'^crawl/export_follow_csv$', views.export_follow_csv, name='export_follow_csv'),
     url(r'^crawl/hashtag_dic$', views.start_hashtag_dictionary, name='hashtag_dictionary'),
     url(r'^crawl/api_hashtag_dic$', views.api_hashtag_dic, name='api_hashtag_dictionary'),
+    url(r'^crawl/export_hashtag_dic$', views.export_hashtag_dic, name='export_hashtag_dic'),
 ]

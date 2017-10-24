@@ -26,6 +26,30 @@ def influencer_list(request):
     influencers = Influencer.objects.order_by('created_date')
     return render(request, 'crawler/influencer_list.html', {'influencers': influencers})
     
+def export_hashtag_dic(request):
+    target_user_pk= request.GET.get('user_pk', '')
+    # Create the HttpResponse object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="hashtag_dic.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['user id', 'hashtag', 'count'])
+    influ_dic_list = Hashtag_Dictionary.objects.filter(user_pk = target_user_pk).order_by('-count')[:10]
+    for dic in influ_dic_list:
+        line_list = [dic.user_pk, dic.hashtag, dic.count]
+        line_list = [str(ele) for ele in line_list]
+        writer.writerow(line_list)
+    
+    follows = Follow.objects.filter(follow_status='ed', object_pk = target_user_pk)
+    for follow in follows:
+        dic_list = Hashtag_Dictionary.objects.filter(user_pk = follow.user_pk).order_by('-count')[:2]
+        for dic in dic_list:
+            line_list = [dic.user_pk, dic.hashtag, dic.count]
+            line_list = [str(ele) for ele in line_list]
+            writer.writerow(line_list)
+
+    return response
+
 def export_follow_csv(request):
     # Create the HttpResponse object with the appropriate CSV header.
     response = HttpResponse(content_type='text/csv')
@@ -40,8 +64,7 @@ def export_follow_csv(request):
         line_list = [str(ele) for ele in line_list]
         writer.writerow(line_list)
 
-    return response    
-    
+    return response
 
 def user_follow(request):
     global host_ip
@@ -93,13 +116,18 @@ def start_hashtag_dictionary(request):
     response = requests.get(curl_url)
     media_json = response.json()["user"]["media"]
 
+    follower_set = set()
+    followers = Follow.objects.filter(follow_status='ed', object_pk = influencer.user_pk)
+    for follower in followers:
+        follower_set.add(follower.user_pk)
+
     likers = set()
     for node in media_json["nodes"]:
         media_id = node["id"]
         api.getMediaLikers(media_id)
         response_json = api.LastJson
         for user in response_json['users']:
-            likers.add((user['username'], user['pk']))
+            if user['pk'] in follower_set: likers.add((user['username'], user['pk']))
 
     total_liker_number = len(likers)
     for num, liker in enumerate(likers):
