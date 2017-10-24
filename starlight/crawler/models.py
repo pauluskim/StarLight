@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 
 class User(models.Model):
-    username = models.CharField(max_length=200)
+    username = models.CharField(max_length=200, db_index=True)
     usertags_count = models.IntegerField(null=True)
     media_count = models.IntegerField(null=True)
     following_count = models.IntegerField(null=True)
@@ -22,10 +22,10 @@ class User(models.Model):
     created_date = models.DateTimeField(default=timezone.now)
     
 class Follow(models.Model):
-    object_pk = models.BigIntegerField()
+    object_pk = models.BigIntegerField(db_index=True)
     follow_status = models.CharField(max_length=5) # ing or ed.
     username = models.CharField(max_length=200)
-    user_pk = models.BigIntegerField()
+    user_pk = models.BigIntegerField(db_index=True)
     is_verified = models.BooleanField()
     is_private = models.BooleanField()
     is_favorite = models.BooleanField()
@@ -57,8 +57,8 @@ class Influencer(models.Model):
         return self.user_id
 
 class Hashtag_Dictionary(models.Model):
-    user_pk = models.BigIntegerField()
-    hashtag = models.TextField(null=True)
+    user_pk = models.BigIntegerField(db_index=True)
+    hashtag = models.CharField(max_length=200, db_index=True, null=True)
     count = models.IntegerField(null=True)
     code_list = models.TextField(null=True)
     created_date = models.DateTimeField(default=timezone.now)

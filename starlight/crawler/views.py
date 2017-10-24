@@ -177,7 +177,13 @@ def save_hashtag_dic(user_pk, hashtag, url_code):
             print '!!!!!!!!!!!!!!!!!!'
 
 def extract_hash_tags(s):
-    return set(part[1:] for part in s.split() if part.startswith('#'))
+    hashtag_set = set()
+    word_list = s.split('#')
+    for word in word_list:
+        raw_hashtag = word.split()
+        if len(raw_hashtag) == 0: continue
+        hashtag_set.add(raw_hashtag[0])
+    return hashtag_set
 
 
 def user_by_name(username):
