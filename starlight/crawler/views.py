@@ -41,10 +41,24 @@ def export_hashtag_dic(request):
         writer.writerow(line_list)
     
     follows = Follow.objects.filter(follow_status='ed', object_pk = target_user_pk)
-    for follow in follows:
-        dic_list = Hashtag_Dictionary.objects.filter(user_pk = follow.user_pk).order_by('-count')[:2]
-        for dic in dic_list:
-            line_list = [dic.user_pk, dic.hashtag, dic.count]
+    follower_pk_list = [follow.user_pk for follow in follows]
+
+    dic_list = Hashtag_Dictionary.objects.filter(user_pk__in=follower_pk_list)
+    print "query is finished. size is " + str(len(dic_list))
+
+    user_tag_count = {}
+    for dic in dic_list:
+        if dic.user_pk in user_tag_count:
+            user_tag_count[dic.user_pk][dic.hashtag] = dic.count
+        else:
+            user_tag_count[dic.user_pk] = {dic.hashtag: dic.count}
+
+    print "Start to write"
+
+    for user, tag_count in user_tag_count.iteritems():
+        sorted_tag = sorted(tag_count, key=tag_count.get, reverse=True)[:2]
+        for tag in sorted_tag:
+            line_list = [user, tag, tag_count[tag]]
             line_list = [str(ele) for ele in line_list]
             writer.writerow(line_list)
 
