@@ -10,7 +10,7 @@ class User(models.Model):
     usertags_count = models.IntegerField(null=True)
     media_count = models.IntegerField(null=True)
     following_count = models.IntegerField(null=True)
-    follower_count = models.IntegerField(null=True)
+    follower_count = models.IntegerField(null=True, db_index=True)
     is_business = models.BooleanField()
     has_chaining = models.BooleanField()
     geo_media_count = models.IntegerField(null=True)

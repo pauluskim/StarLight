@@ -19,7 +19,7 @@ api.login() # login
 
 host_ip = str(requests.get('http://ip.42.pl/raw').text)
 #ip_list = ['http://localhost:8000/']
-ip_list = ['http://13.56.240.85/', 'http://13.57.16.83/', 'http://13.57.12.106/', 'http://54.183.65.48/', 'http://52.53.255.11/']
+ip_list = ['http://54.193.110.66/', 'http://54.183.80.114/', 'http://54.193.93.140/', 'http://13.56.159.162/', 'http://54.219.169.148/']
 # 2, 1, 3, 5, 4
     
 def influencer_list(request):
@@ -85,23 +85,30 @@ def user_follow(request):
     global ip_list
 
     target_username= request.GET.get('username', '')
+    target_user_pk= request.GET.get('target_user_pk', '')
     max_id= request.GET.get('max_id', '')
-    
-    if target_username == "": return HttpResponseRedirect("/crawl/follow_list")
-    
-    target_user_pk = user_by_name(target_username).user_pk
-    
-    crawler_domain = "http://"+host_ip+"/"
+    next_function= request.GET.get('next_function', '')
 
     num_crawler = len(ip_list)
     #crawler_index = ip_list.index(crawler_domain)
     crawler_index = 0 
-    # For develop in local.
+    crawler_domain = ip_list[crawler_index]
+    # For develop in local.   
+
+    if target_user_pk == "":
+        if target_username == "": return HttpResponseRedirect("/crawl/follow_list")
+        
+        #target_user_pk = user_by_name(target_username).user_pk
+        response = requests.get(crawler_domain+"crawl/user_by_name?username="+target_username)
+        json_response = json.loads(response.text)
+
+        if json_response["success"]: 
+            target_user_pk = json_response["target_user_pk"]
+        else: return HttpResponseRedirect('/crawl/follow_list')
     
     while max_id != "end":
         while True:
             response = requests.get(crawler_domain+"crawl/followers/"+str(target_user_pk)+"/?max_id="+max_id)
-            print response
             try:
                 json_response = json.loads(response.text)
                 break
@@ -117,9 +124,28 @@ def user_follow(request):
         crawler_index = (crawler_index + 1) % num_crawler
         crawler_domain = ip_list[crawler_index]
 
-        
+    if next_function=='check_influencer': return HttpResponseRedirect('/crawl/check_influencer?object_pk={}&crawler_index={}'.format(target_user_pk, crawler_index))
+    else: return HttpResponseRedirect('/crawl/follow_list')
+
+
+def check_influencer(request):
+    global host_ip
+    global ip_list
+    num_crawler = len(ip_list)
+    object_pk= request.GET.get('object_pk', '')
+    crawler_index= int(request.GET.get('crawler_index', '0'))
+    followers = Follow.objects.filter(follow_status='ed', object_pk =object_pk)
+
+    for follower in followers:
+        crawler_domain = ip_list[crawler_index]
+        target_user_pk = requests.get(crawler_domain+"crawl/user_by_name?username="+follower.username)
+        crawler_index = (crawler_index + 1) % num_crawler
+        if target_user_pk == 'FULL': return
+        elif target_user_pk != "not influencer":
+            crawler_domain = ip_list[crawler_index]
+            requests.get(crawler_domain+"crawl/user_follow?target_user_pk="+target_user_pk)
+            crawler_index = (crawler_index + 1) % num_crawler
     
-    return HttpResponseRedirect('/crawl/follow_list')
 
 def start_hashtag_dictionary(request):
     username = request.GET.get('username', '')
@@ -228,29 +254,36 @@ def extract_hash_tags(s):
     return hashtag_set
 
 
-def user_by_name(username):
+def user_by_name(request):
+    username = request.GET.get("username", "")
+    if User.objects.count() >= 10000: return JsonResponse({'success': False, target_user_pk:"FULL"})
     if User.objects.filter(username = username).exists():
-        return User.objects.get(username = username)
+        return JsonResponse({'success': True, 'target_user_pk':User.objects.get(username = username).user_pk})
     else:
+        print "Am I here"
         api.searchUsername(username)
         user_info = api.LastJson["user"]
-        user = User(created_date=timezone.now())
-        user.username = user_info["username"]
-        user.usertags_count = user_info["usertags_count"]
-        user.media_count = user_info["media_count"]
-        user.following_count = user_info["following_count"]
-        user.follower_count = user_info["follower_count"]
-        user.is_business = user_info["is_business"]
-        user.has_chaining = user_info["has_chaining"]
-        user.geo_media_count = user_info["geo_media_count"]
-        user.user_pk = user_info["pk"]
-        user.is_verified = user_info["is_verified"]
-        user.is_private = user_info["is_private"]
-        if "is_favorite" in user_info: user.is_favorite = user_info["is_favorite"]
-        else: user.is_favorite = False
-        user.external_url = user_info["external_url"]
-        user.save()
-        return user
+        if user_info["follower_count"] >= 10000:
+            user = User(created_date=timezone.now())
+            user.username = user_info["username"]
+            user.usertags_count = user_info["usertags_count"]
+            user.media_count = user_info["media_count"]
+            user.following_count = user_info["following_count"]
+            user.follower_count = user_info["follower_count"]
+            user.is_business = user_info["is_business"]
+            user.has_chaining = user_info["has_chaining"]
+            user.geo_media_count = user_info["geo_media_count"]
+            user.user_pk = user_info["pk"]
+            user.is_verified = user_info["is_verified"]
+            user.is_private = user_info["is_private"]
+            if "is_favorite" in user_info: user.is_favorite = user_info["is_favorite"]
+            else: user.is_favorite = False
+            user.external_url = user_info["external_url"]
+            user.save()
+            print "Saved"
+            return JsonResponse({'success': True, 'target_user_pk':user.user_pk})
+        else:
+            return JsonResponse({'success': False, 'target_user_pk':"Not Influencer"})
 
 def followers(request, target_user_pk):
     max_id = request.GET.get('max_id', '')
@@ -355,3 +388,4 @@ def parse_item(items):
         influencer.save()
         print 'Also Am I here?'
         print influencer.followers
+

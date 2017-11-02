@@ -13,4 +13,6 @@ urlpatterns = [
     url(r'^crawl/hashtag_dic$', views.start_hashtag_dictionary, name='hashtag_dictionary'),
     url(r'^crawl/api_hashtag_dic$', views.api_hashtag_dic, name='api_hashtag_dictionary'),
     url(r'^crawl/export_hashtag_dic$', views.export_hashtag_dic, name='export_hashtag_dic'),
+    url(r'^crawl/check_influencer$', views.check_influencer, name='export_hashtag_dic'),
+    url(r'^crawl/user_by_name$', views.user_by_name, name='user_by_name'),
 ]
