@@ -90,8 +90,8 @@ def user_follow(request):
     next_function= request.GET.get('next_function', '')
 
     num_crawler = len(ip_list)
-    #crawler_index = ip_list.index(crawler_domain)
-    crawler_index = 0 
+    crawler_index = ip_list.index(crawler_domain)
+    #crawler_index = 0 
     crawler_domain = ip_list[crawler_index]
     # For develop in local.   
 
@@ -138,12 +138,24 @@ def check_influencer(request):
 
     for follower in followers:
         crawler_domain = ip_list[crawler_index]
-        target_user_pk = requests.get(crawler_domain+"crawl/user_by_name?username="+follower.username)
+        
+        while True:
+            response = requests.get(crawler_domain+"crawl/user_by_name?username="+follower.username)
+            try:
+                json_response = json.loads(response.text)
+                break
+            except:
+                print "Some json data is wrong."
+                print response.text
+                crawler_index = (crawler_index + 1) % num_crawler
+                crawler_domain = ip_list[crawler_index]
+                continue
+
         crawler_index = (crawler_index + 1) % num_crawler
-        if target_user_pk == 'FULL': return
-        elif target_user_pk != "not influencer":
+        if json_response["success"] == False: return
+        else:
             crawler_domain = ip_list[crawler_index]
-            requests.get(crawler_domain+"crawl/user_follow?target_user_pk="+target_user_pk)
+            requests.get(crawler_domain+"crawl/user_follow?target_user_pk="+json_response["target_user_pk"])
             crawler_index = (crawler_index + 1) % num_crawler
     
 
