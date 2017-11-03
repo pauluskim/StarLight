@@ -272,7 +272,7 @@ def extract_hash_tags(s):
 
 def user_by_name(request):
     username = request.GET.get("username", "")
-    if User.objects.count() < 10000: return JsonResponse({'success': False, 'target_user_pk':"FULL"})
+    if User.objects.count() > 10000: return JsonResponse({'success': False, 'target_user_pk':"FULL"})
     if User.objects.filter(username = username).exists():
         return JsonResponse({'success': True, 'target_user_pk':User.objects.get(username = username).user_pk})
     else:
