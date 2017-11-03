@@ -312,9 +312,12 @@ def is_korean(username):
     response = requests.get(curl_url)
     media_json = response.json()["user"]["media"]
     for node in media_json["nodes"]:
-        if detect(node["caption"]) == 'ko': 
-            print 'korean'
-            return True
+        try:
+            if detect(node["caption"]) == 'ko': 
+                print 'korean'
+                return True
+        except:
+            continue
     print 'not korean'
     return False
 
