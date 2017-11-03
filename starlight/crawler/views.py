@@ -100,7 +100,7 @@ def user_follow(request):
         if target_username == "": return HttpResponseRedirect("/crawl/follow_list")
         
         #target_user_pk = user_by_name(target_username).user_pk
-        response = requests.get(crawler_domain+"crawl/user_by_name?username="+target_username)
+        response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username="+target_username)
         json_response = json.loads(response.text)
 
         if json_response["success"]: 
@@ -142,7 +142,7 @@ def check_influencer(request):
         crawler_domain = ip_list[crawler_index]
         
         while True:
-            response = requests.get(crawler_domain+"crawl/user_by_name?username="+follower.username)
+            response = requests.get(crawler_domain+"crawl/user_by_name?recursive=True&username="+follower.username)
             try:
                 json_response = json.loads(response.text)
                 break
@@ -272,9 +272,13 @@ def extract_hash_tags(s):
 
 def user_by_name(request):
     username = request.GET.get("username", "")
+    recursive = request.GET.get("recursive", 'False')
     if User.objects.count() > 10000: return JsonResponse({'success': False, 'target_user_pk':"FULL"})
     if User.objects.filter(username = username).exists():
-        return JsonResponse({'success': True, 'target_user_pk':User.objects.get(username = username).user_pk})
+        if recursive == 'False':
+            return JsonResponse({'success': True, 'target_user_pk':User.objects.get(username = username).user_pk})
+        else:
+            return JsonResponse({'success': False, 'target_user_pk':'already visited'})
     else:
         api.searchUsername(username)
         try:
