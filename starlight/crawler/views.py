@@ -158,7 +158,7 @@ def check_influencer(request):
         else:
             print "Caught Influencer."
             crawler_domain = ip_list[crawler_index]
-            requests.get(crawler_domain+"crawl/user_follow?target_user_pk="+json_response["target_user_pk"])
+            requests.get(crawler_domain+"crawl/user_follow?target_user_pk="+str(json_response["target_user_pk"]))
             crawler_index = (crawler_index + 1) % num_crawler
 
     return JsonResponse({'success': True})
@@ -277,7 +277,10 @@ def user_by_name(request):
         return JsonResponse({'success': True, 'target_user_pk':User.objects.get(username = username).user_pk})
     else:
         api.searchUsername(username)
-        user_info = api.LastJson["user"]
+        try:
+            user_info = api.LastJson["user"]
+        except:
+            print api.LastJson
         if user_info["follower_count"] >= 10000:
             if not is_korean(username): return JsonResponse({'success': False, 'target_user_pk': 'Not korean'})
             user = User(created_date=timezone.now())
