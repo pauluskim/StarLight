@@ -158,7 +158,7 @@ def check_influencer(request):
         else:
             print "Caught Influencer."
             crawler_domain = ip_list[crawler_index]
-            requests.get(crawler_domain+"crawl/user_follow?target_user_pk="+str(json_response["target_user_pk"]))
+            requests.get(crawler_domain+"crawl/user_follow?next_function=check_influencer&target_user_pk="+str(json_response["target_user_pk"]))
             crawler_index = (crawler_index + 1) % num_crawler
 
     return JsonResponse({'success': True})
