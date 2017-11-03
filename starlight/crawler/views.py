@@ -281,6 +281,8 @@ def user_by_name(request):
             user_info = api.LastJson["user"]
         except:
             print api.LastJson
+            return JsonResponse({'success': False, 'target_user_pk':"API FAIL"})
+
         if user_info["follower_count"] >= 10000:
             if not is_korean(username): return JsonResponse({'success': False, 'target_user_pk': 'Not korean'})
             user = User(created_date=timezone.now())
