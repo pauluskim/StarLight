@@ -10,6 +10,7 @@ from crawler.models import Influencer, Post, User, Follow, Hashtag_Dictionary
 import pdb, datetime, csv, os, sys, requests, json
 from django.utils import timezone
 from auth import *
+from langdetect import *
 
 sys.path.append(os.path.abspath('./crawler/Instagram-API-python'))
 from InstagramAPI import InstagramAPI
@@ -135,8 +136,9 @@ def check_influencer(request):
     object_pk= request.GET.get('object_pk', '')
     crawler_index= int(request.GET.get('crawler_index', '0'))
     followers = Follow.objects.filter(follow_status='ed', object_pk =object_pk)
+    num_followers = followers.count()
 
-    for follower in followers:
+    for index, follower in enumerate(followers):
         crawler_domain = ip_list[crawler_index]
         
         while True:
@@ -150,10 +152,11 @@ def check_influencer(request):
                 crawler_index = (crawler_index + 1) % num_crawler
                 crawler_domain = ip_list[crawler_index]
                 continue
-
+        print str(index)+ " / " + str(num_followers)
         crawler_index = (crawler_index + 1) % num_crawler
         if json_response["success"] == False: continue 
         else:
+            print "Caught Influencer."
             crawler_domain = ip_list[crawler_index]
             requests.get(crawler_domain+"crawl/user_follow?target_user_pk="+json_response["target_user_pk"])
             crawler_index = (crawler_index + 1) % num_crawler
@@ -276,6 +279,7 @@ def user_by_name(request):
         api.searchUsername(username)
         user_info = api.LastJson["user"]
         if user_info["follower_count"] >= 10000:
+            if not is_korean(username): return JsonResponse({'success': False, 'target_user_pk': 'Not korean'})
             user = User(created_date=timezone.now())
             user.username = user_info["username"]
             user.usertags_count = user_info["usertags_count"]
@@ -296,6 +300,18 @@ def user_by_name(request):
             return JsonResponse({'success': True, 'target_user_pk':user.user_pk})
         else:
             return JsonResponse({'success': False, 'target_user_pk':"Not Influencer"})
+
+
+def is_korean(username):
+    curl_url = "https://www.instagram.com/"+username+"/?__a=1"
+    response = requests.get(curl_url)
+    media_json = response.json()["user"]["media"]
+    for node in media_json["nodes"]:
+        if detect(node["caption"]) == 'ko': 
+            print 'korean'
+            return True
+    print 'not korean'
+    return False
 
 def followers(request, target_user_pk):
     max_id = request.GET.get('max_id', '')

@@ -23,7 +23,7 @@ class User(models.Model):
     
 class Follow(models.Model):
     object_pk = models.BigIntegerField(db_index=True)
-    follow_status = models.CharField(max_length=5) # ing or ed.
+    follow_status = models.CharField(max_length=5, db_index=True) # ing or ed.
     username = models.CharField(max_length=200)
     user_pk = models.BigIntegerField(db_index=True)
     is_verified = models.BooleanField()
