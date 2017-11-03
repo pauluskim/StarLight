@@ -91,7 +91,7 @@ def user_follow(request):
     next_function= request.GET.get('next_function', '')
 
     num_crawler = len(ip_list)
-    crawler_index = ip_list.index(host_ip)
+    crawler_index = ip_list.index("http://"+host_ip+"/")
     #crawler_index = 0 
     crawler_domain = ip_list[crawler_index]
     # For develop in local.   
