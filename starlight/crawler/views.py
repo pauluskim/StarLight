@@ -152,12 +152,13 @@ def check_influencer(request):
                 continue
 
         crawler_index = (crawler_index + 1) % num_crawler
-        if json_response["success"] == False: return
+        if json_response["success"] == False: continue 
         else:
             crawler_domain = ip_list[crawler_index]
             requests.get(crawler_domain+"crawl/user_follow?target_user_pk="+json_response["target_user_pk"])
             crawler_index = (crawler_index + 1) % num_crawler
-    
+
+    return JsonResponse({'success': True})
 
 def start_hashtag_dictionary(request):
     username = request.GET.get('username', '')
@@ -272,7 +273,6 @@ def user_by_name(request):
     if User.objects.filter(username = username).exists():
         return JsonResponse({'success': True, 'target_user_pk':User.objects.get(username = username).user_pk})
     else:
-        print "Am I here"
         api.searchUsername(username)
         user_info = api.LastJson["user"]
         if user_info["follower_count"] >= 10000:
