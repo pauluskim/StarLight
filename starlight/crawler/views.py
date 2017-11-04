@@ -137,7 +137,7 @@ def check_influencer(request):
     object_pk= request.GET.get('object_pk', '')
     recursive_step = request.GET.get('recursive_step', '1')
     crawler_index= int(request.GET.get('crawler_index', '0'))
-    last_user_pk= int(request.GET.get('last_user_pk', ''))
+    last_user_pk= request.GET.get('last_user_pk', '')
     skip_flag = False
     if last_user_pk != '': skip_flag = True
 
@@ -147,7 +147,7 @@ def check_influencer(request):
 
     for index, follower in enumerate(followers):
         if skip_flag:
-            if follower.user_pk == last_user_pk: 
+            if follower.user_pk == int(last_user_pk): 
                 skip_flag = False
                 print follower.username
             continue
