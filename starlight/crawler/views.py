@@ -110,7 +110,7 @@ def user_follow(request):
     
     while max_id != "end":
         while True:
-            response = requests.get(crawler_domain+"crawl/followers/"+str(target_user_pk)+"/?max_id="+max_id)
+            response = requests.get(crawler_domain+"crawl/followers/"+str(target_user_pk)+"/?max_id={}&recursive_step={}".format(max_id, recursive_step))
             try:
                 json_response = json.loads(response.text)
                 break
@@ -156,7 +156,7 @@ def check_influencer(request):
         
         request_counter = 0 
         while True:
-            response = requests.get(crawler_domain+"crawl/user_by_name?recursive={}&username={}".format('True',follower.username))
+            response = requests.get(crawler_domain+"crawl/user_by_name?recursive_step={}&recursive={}&username={}".format(recursive_step, 'True',follower.username))
             try:
                 json_response = json.loads(response.text)
                 break
