@@ -89,6 +89,7 @@ def user_follow(request):
     target_user_pk= request.GET.get('target_user_pk', '')
     max_id= request.GET.get('max_id', '')
     next_function= request.GET.get('next_function', '')
+    recursive_step= request.GET.get('recursive_step', '1')
 
     num_crawler = len(ip_list)
     crawler_index = ip_list.index("http://"+host_ip+"/")
@@ -125,7 +126,7 @@ def user_follow(request):
         crawler_index = (crawler_index + 1) % num_crawler
         crawler_domain = ip_list[crawler_index]
 
-    if next_function=='check_influencer': return HttpResponseRedirect('/crawl/check_influencer?object_pk={}&crawler_index={}'.format(target_user_pk, crawler_index))
+    if next_function=='check_influencer': return HttpResponseRedirect('/crawl/check_influencer?object_pk={}&crawler_index={}&recursive_step={}'.format(target_user_pk, crawler_index, recursive_step))
     else: return HttpResponseRedirect('/crawl/follow_list')
 
 
@@ -134,6 +135,7 @@ def check_influencer(request):
     global ip_list
     num_crawler = len(ip_list)
     object_pk= request.GET.get('object_pk', '')
+    recursive_step = request.GET.get('recursive_step', '1')
     crawler_index= int(request.GET.get('crawler_index', '0'))
     last_user_pk= int(request.GET.get('last_user_pk', ''))
     skip_flag = False
@@ -154,7 +156,7 @@ def check_influencer(request):
         
         request_counter = 0 
         while True:
-            response = requests.get(crawler_domain+"crawl/user_by_name?recursive=True&username="+follower.username)
+            response = requests.get(crawler_domain+"crawl/user_by_name?recursive={}&username={}".format('True',follower.username))
             try:
                 json_response = json.loads(response.text)
                 break
@@ -170,11 +172,14 @@ def check_influencer(request):
         if request_counter > 5: continue
         print str(index)+ " / " + str(num_followers)
         crawler_index = (crawler_index + 1) % num_crawler
-        if json_response["success"] == False: continue 
+        if json_response["success"] == False: 
+            if json_response["target_user_pk"] == "Not Influencer": follower.delete()
+            continue 
         else:
             print "Caught Influencer."
             crawler_domain = ip_list[crawler_index]
-            requests.get(crawler_domain+"crawl/user_follow?next_function=check_influencer&target_user_pk="+str(json_response["target_user_pk"]))
+            recursive_step = str(int(recursive_step)+1)
+            requests.get(crawler_domain+"crawl/user_follow?next_function={}&target_user_pk={}&recursive_step={}".format("check_influencer", str(json_response["target_user_pk"]), recursive_step))
             crawler_index = (crawler_index + 1) % num_crawler
 
     return JsonResponse({'success': True})
