@@ -178,6 +178,7 @@ def check_influencer(request):
         else:
             print "Caught Influencer."
             crawler_domain = ip_list[crawler_index]
+            if recursive_step == '2': return JsonResponse({'success': True})
             recursive_step = str(int(recursive_step)+1)
             requests.get(crawler_domain+"crawl/user_follow?next_function={}&target_user_pk={}&recursive_step={}".format("check_influencer", str(json_response["target_user_pk"]), recursive_step))
             crawler_index = (crawler_index + 1) % num_crawler
@@ -318,7 +319,8 @@ def user_by_name(request):
             user.follower_count = user_info["follower_count"]
             user.is_business = user_info["is_business"]
             user.has_chaining = user_info["has_chaining"]
-            user.geo_media_count = user_info["geo_media_count"]
+            if "geo_media_count" in user_info : user.geo_media_count = user_info["geo_media_count"]
+            else : user.geo_media_count = 0
             user.user_pk = user_info["pk"]
             user.is_verified = user_info["is_verified"]
             user.is_private = user_info["is_private"]
