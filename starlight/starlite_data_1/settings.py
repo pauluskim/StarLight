@@ -25,7 +25,7 @@ SECRET_KEY = 'a9idx4kvg_@^#)e#zt@4n-_t)pb&ilzy=io3u3^66+dxeled0&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]','ec2-54-193-110-66.us-west-1.compute.amazonaws.com','54.193.110.66', 'ec2-54-183-80-114.us-west-1.compute.amazonaws.com', '54.183.80.114', 'ec2-54-193-93-140.us-west-1.compute.amazonaws.com', '54.193.93.140', 'ec2-13-56-159-162.us-west-1.compute.amazonaws.com', '13.56.159.162', 'ec2-54-219-169-148.us-west-1.compute.amazonaws.com', '54.219.169.148']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]','ec2-54-193-110-66.us-west-1.compute.amazonaws.com','54.193.110.66', 'ec2-54-183-80-114.us-west-1.compute.amazonaws.com', '54.183.80.114', 'ec2-54-193-93-140.us-west-1.compute.amazonaws.com', '54.193.93.140', 'ec2-13-56-159-162.us-west-1.compute.amazonaws.com', '13.56.159.162', 'ec2-54-219-169-148.us-west-1.compute.amazonaws.com', '54.219.169.148', 'ip-172-31-23-198.us-west-1.compute.internal', 'ip-172-31-27-159.us-west-1.compute.internal', 'ip-172-31-31-219.us-west-1.compute.internal']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 

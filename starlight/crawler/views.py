@@ -135,23 +135,39 @@ def check_influencer(request):
     num_crawler = len(ip_list)
     object_pk= request.GET.get('object_pk', '')
     crawler_index= int(request.GET.get('crawler_index', '0'))
+    last_user_pk= int(request.GET.get('last_user_pk', ''))
+    skip_flag = False
+    if last_user_pk != '': skip_flag = True
+
     followers = Follow.objects.filter(follow_status='ed', object_pk =object_pk)
+
     num_followers = followers.count()
 
     for index, follower in enumerate(followers):
+        if skip_flag:
+            if follower.user_pk == last_user_pk: 
+                skip_flag = False
+                print follower.username
+            continue
+
         crawler_domain = ip_list[crawler_index]
         
+        request_counter = 0 
         while True:
             response = requests.get(crawler_domain+"crawl/user_by_name?recursive=True&username="+follower.username)
             try:
                 json_response = json.loads(response.text)
                 break
             except:
+                request_counter += 1
+                if request_counter > 5: break
                 print "Some json data is wrong."
                 print response.text
                 crawler_index = (crawler_index + 1) % num_crawler
                 crawler_domain = ip_list[crawler_index]
                 continue
+
+        if request_counter > 5: continue
         print str(index)+ " / " + str(num_followers)
         crawler_index = (crawler_index + 1) % num_crawler
         if json_response["success"] == False: continue 
