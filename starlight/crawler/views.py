@@ -178,7 +178,7 @@ def check_influencer(request):
         else:
             print "Caught Influencer."
             crawler_domain = ip_list[crawler_index]
-            if recursive_step == '3': continue 
+            if recursive_step == '2': continue 
             recursive_step = str(int(recursive_step)+1)
             requests.get(crawler_domain+"crawl/user_follow?next_function={}&target_user_pk={}&recursive_step={}".format("check_influencer", str(json_response["target_user_pk"]), recursive_step))
             recursive_step = str(int(recursive_step)-1)
