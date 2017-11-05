@@ -7,7 +7,7 @@ sys.setdefaultencoding('utf-8')
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from crawler.models import Influencer, Post, User, Follow, Hashtag_Dictionary
-import pdb, datetime, csv, os, sys, requests, json
+import pdb, datetime, csv, os, sys, requests, json, time
 from django.utils import timezone
 from auth import *
 from langdetect import *
@@ -159,9 +159,11 @@ def check_influencer(request):
             response = requests.get(crawler_domain+"crawl/user_by_name?recursive_step={}&recursive={}&username={}".format(recursive_step, 'True',follower.username))
             try:
                 json_response = json.loads(response.text)
+                time.sleep(1)
                 break
             except:
                 request_counter += 1
+                time.sleep(1)
                 if request_counter > 5: break
                 print "Some json data is wrong."
                 print response.text
