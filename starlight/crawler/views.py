@@ -20,7 +20,6 @@ api.login() # login
 
 host_ip = str(requests.get('http://ip.42.pl/raw').text)
 #ip_list = ['http://localhost:8000/']
-ip_list = ['http://54.193.110.66/', 'http://54.183.80.114/', 'http://54.193.93.140/', 'http://13.56.159.162/', 'http://54.219.169.148/']
 # 2, 1, 3, 5, 4
     
 def influencer_list(request):
