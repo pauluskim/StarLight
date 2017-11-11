@@ -20,7 +20,7 @@ api.login() # login
 
 host_ip = str(requests.get('http://ip.42.pl/raw').text)
 #ip_list = ['http://localhost:8000/']
-ip_list = ['http://54.193.110.66/', 'http://54.183.80.114/', 'http://54.193.93.140/', 'http://13.56.159.162/', 'http://54.219.169.148/']
+ip_list = ['http://52.52.196.98/', 'http://13.57.80.18/', 'http://13.56.107.109/', 'http://52.53.201.131/', 'http://54.183.193.51/']
 # 2, 1, 3, 5, 4
     
 def influencer_list(request):
@@ -310,7 +310,7 @@ def user_by_name(request):
             print api.LastJson
             return JsonResponse({'success': False, 'target_user_pk':"API FAIL"})
 
-        if user_info["follower_count"] >= 10000:
+        if user_info["follower_count"] >= 5000:
             if not is_korean(username): return JsonResponse({'success': False, 'target_user_pk': 'Not korean'})
             user = User(created_date=timezone.now())
             user.username = user_info["username"]
