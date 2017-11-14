@@ -457,11 +457,11 @@ def parse_item(items, crawler_index):
         
         influencer = User.objects.get(user_pk = user_info['target_user_pk'])
         engagement_rate = float(comment_count + like_count) / influencer.follower_count
-        influencer.engagement_rate = engagement_rate
-        influencer.num_commenters = comment_count
-        influencer.num_views = view_count
-        influencer.num_likes = like_count
-        influencer.remark = url
-
-        influencer.save()
+        if engagement_rate > influencer.engagement_rate:
+            influencer.engagement_rate = engagement_rate
+            influencer.num_commenters = comment_count
+            influencer.num_views = view_count
+            influencer.num_likes = like_count
+            influencer.remark = url
+            influencer.save()
 
