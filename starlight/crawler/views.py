@@ -3,11 +3,10 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from crawler.models import Influencer, Post, User, Follow, Hashtag_Dictionary
-import pdb, datetime, csv, os, sys, requests, json
+import pdb, datetime, csv, os, sys, requests, json, time
 from django.utils import timezone
 from auth import *
 from langdetect import *
@@ -385,7 +384,24 @@ def follow_list(request):
     follow_list = Follow.objects.order_by('created_date')[:10]
     return render(request, 'crawler/follow_list.html', {'follow_list': follow_list})
 
-        
+def start_hashtag_posts(request):
+    global ip_list
+    num_crawler = len(ip_list)
+
+    hashtag = request.GET.get("hashtag", '')
+    max_id = request.GET.get('max_id', '')
+    crawler_index= int(request.GET.get('crawler_index', '0'))
+
+    while max_id != 'end':
+        crawler_domain = ip_list[crawler_index]
+        response = requests.get(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}".format(hashtag, max_id, crawler_index))
+        result = json.loads(response.text)
+        if result['success']: max_id = result["next_max_id"]
+        else: time.sleep(10)
+        crawler_index = (crawler_index + 1) % num_crawler
+
+    return JsonResponse({'success':True})
+
     
 def crawl_hashtag_posts(request):
     global ip_list
@@ -402,10 +418,7 @@ def crawl_hashtag_posts(request):
     hashtag_metadata = api.LastJson
     
     if api.LastResponse.status_code != 200:
-        print(api.LastJson)
-        crawler_index = (crawler_index + 1) % num_crawler
-        crawler_domain = ip_list[crawler_index]
-        return HttpResponseRedirect(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}".format(hashtag, max_id, crawler_index))
+        return JsonResponse({'success':False})
 
     if "ranked_items" in hashtag_metadata:
         items = hashtag_metadata["ranked_items"]
@@ -416,11 +429,9 @@ def crawl_hashtag_posts(request):
 
     if "next_max_id" in hashtag_metadata: 
         max_id = hashtag_metadata["next_max_id"]
-        crawler_index = (crawler_index + 1) % num_crawler
-        crawler_domain = ip_list[crawler_index]
-        return HttpResponseRedirect(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}".format(hashtag, max_id, crawler_index))
+        return JsonResponse({'success':True, 'next_max_id': max_id})
     else:
-        return JsonResponse({'success':True})
+        return JsonResponse({'success':True, 'next_max_id': 'end'})
 
 
 def parse_item(items, crawler_index):
@@ -437,7 +448,6 @@ def parse_item(items, crawler_index):
     
         user_id = item["user"]["username"]
         payload['user_id'] = user_id
-
 
         crawler_index = (crawler_index + 1) % num_crawler
         crawler_domain = ip_list[crawler_index]
