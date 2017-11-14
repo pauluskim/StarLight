@@ -388,8 +388,12 @@ def follow_list(request):
         
     
 def crawl_hashtag_posts(request):
+    global ip_list
+    num_crawler = len(ip_list)
+    
     hashtag = request.GET.get("hashtag", '')
     max_id = request.GET.get('max_id', '')
+    crawler_index= int(request.GET.get('crawler_index', '0'))
     
     if max_id == "":
         api.getHashtagFeed(hashtag)
@@ -399,22 +403,30 @@ def crawl_hashtag_posts(request):
     
     if api.LastResponse.status_code != 200:
         print(api.LastJson)
-        print "No hashtag info"
-        return False
+        crawler_index = (crawler_index + 1) % num_crawler
+        crawler_domain = ip_list[crawler_index]
+        return HttpResponseRedirect(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}".format(hashtag, max_id, crawler_index))
 
     if "ranked_items" in hashtag_metadata:
         items = hashtag_metadata["ranked_items"]
-        parse_item(items)
+        parse_item(items, crawler_index)
     if "items" in hashtag_metadata:
         items = hashtag_metadata["items"]
-        parse_item(items)
+        parse_item(items, crawler_index)
 
-    if "next_max_id" in hashtag_metadata: max_id = hashtag_metadata["next_max_id"]
-    else:max_id = "end"
-    
-    return JsonResponse({'max_id':max_id})
+    if "next_max_id" in hashtag_metadata: 
+        max_id = hashtag_metadata["next_max_id"]
+        crawler_index = (crawler_index + 1) % num_crawler
+        crawler_domain = ip_list[crawler_index]
+        return HttpResponseRedirect(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}".format(hashtag, max_id, crawler_index))
+    else:
+        return JsonResponse({'success':True})
 
-def parse_item(items):
+
+def parse_item(items, crawler_index):
+    global ip_list
+    num_crawler = len(ip_list)
+
     for item in items:
         payload = {}
         # Only get 2017 data.
@@ -426,31 +438,30 @@ def parse_item(items):
         user_id = item["user"]["username"]
         payload['user_id'] = user_id
 
-        response = requests.get("https://starlite-data-1-jaegyunkim25.c9users.io/crawl/user_info?user_id="+user_id)
+
+        crawler_index = (crawler_index + 1) % num_crawler
+        crawler_domain = ip_list[crawler_index]
+        response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username="+user_id)
         user_info = json.loads(response.text)
-        num_followers = user_info['num_followers']
-        payload['num_followers'] = num_followers
-        
-        if num_followers < 1000: continue
-        
+        if not user_info["success"] : continue
 
         if "comment_count" in item: comment_count = item["comment_count"]
         else: comment_count = 0
+        if "view_count" in item: view_count = item["view_count"]
+        else: view_count = 0
         if "like_count" in item: like_count = item["like_count"]
         else: like_count = 0
         if "code" in item: url = "https://www.instagram.com/p/"+item["code"]
         else: url =""
 
-        engagement_rate = float(comment_count + like_count) / num_followers
-        print engagement_rate
-        print 'Am I here?'
-        influencer = Influencer(user_id=user_id, created_date=timezone.now())
+        
+        influencer = User.objects.get(user_pk = user_info['target_user_pk'])
+        engagement_rate = float(comment_count + like_count) / influencer.follower_count
         influencer.engagement_rate = engagement_rate
         influencer.num_commenters = comment_count
+        influencer.num_views = view_count
         influencer.num_likes = like_count
-        influencer.num_followers = num_followers
-        influencer.followers = url
+        influencer.remark = url
+
         influencer.save()
-        print 'Also Am I here?'
-        print influencer.followers
 

@@ -21,6 +21,13 @@ class User(models.Model):
     external_url = models.TextField(null=True)
     created_date = models.DateTimeField(default=timezone.now)
     
+    engagement_rate = models.DecimalField(max_digits=22, decimal_places=20, null=True)
+    num_likes = models.IntegerField(null=True)
+    num_commenters = models.IntegerField(null=True)
+    num_views = models.IntegerField(null=True)
+    remark = models.TextField(null=True)
+
+
 class Follow(models.Model):
     object_pk = models.BigIntegerField(db_index=True)
     follow_status = models.CharField(max_length=5, db_index=True) # ing or ed.
