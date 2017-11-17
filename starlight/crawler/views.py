@@ -147,7 +147,6 @@ def check_influencer(request):
     num_followers = followers.count()
 
     for index, follower in enumerate(followers):
-        if index < 600: continue
         if skip_flag:
             if follower.user_pk == int(last_user_pk): 
                 skip_flag = False
