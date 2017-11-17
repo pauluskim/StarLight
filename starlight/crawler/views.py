@@ -395,10 +395,11 @@ def start_hashtag_posts(request):
     hashtag = request.GET.get("hashtag", '')
     max_id = request.GET.get('max_id', '')
     crawler_index= int(request.GET.get('crawler_index', '0'))
+    kor_check = request.GET.get('kor_check', 't')
 
     while max_id != 'end':
         crawler_domain = ip_list[crawler_index]
-        response = requests.get(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}".format(hashtag, max_id, crawler_index))
+        response = requests.get(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}&kor_check={}".format(hashtag, max_id, crawler_index, kor_check))
         result = json.loads(response.text)
         if result['success']: max_id = result["next_max_id"]
         else: time.sleep(10)
