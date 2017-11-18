@@ -615,7 +615,11 @@ def calculate_engagement(request):
     crawler_index= int(request.GET.get('crawler_index', '0'))
 
     users = User.objects.filter(Q(remark='animal_supporter') | Q(remark='animal_followed_influencer'))
+    num_users = users.count()
+    counter = 0
     for user in users:
+        counter += 1
+        print counter , ' / ', num_users
         crawler_domain = ip_list[crawler_index]
         request_counter = 0 
         while True:
@@ -658,9 +662,16 @@ def __a_engagement(request):
             video_count += 1
             views_count += node['video_views']
 
-    user.num_commenters = float(comment_count) / post_count
-    user.num_likes = float(likes_count) / post_count
-    user.num_views = float(views_count) / video_count
+    if post_count > 0 :
+        user.num_commenters = float(comment_count) / post_count
+        user.num_likes = float(likes_count) / post_count
+    else:
+        user.num_commenters = 0
+        user.num_likes = 0
+    if video_count > 0 :
+        user.num_views = float(views_count) / video_count
+    else:
+        user.num_views = 0 
     user.num_engagement_rate = user.num_commenters + user.num_likes + user.num_views
     user.save()
     return JsonResponse({"success": True})
