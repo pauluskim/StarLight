@@ -366,7 +366,7 @@ def followers(request, target_user_pk):
         return JsonResponse({'max_id': max_id})
         
     for follower in followers["users"]:
-        if Follow.objects.filter(user_pk = follower["pk"], object_pk = target_user_pk).exists(): continue
+        if Follow.objects.filter(user_pk = follower["pk"], object_pk = target_user_pk, follow_status='ed').exists(): continue
         follow = Follow(created_date=timezone.now())
         follow.object_pk = target_user_pk
         follow.follow_status = 'ed'
