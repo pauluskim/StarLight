@@ -452,7 +452,9 @@ def parse_item(items, crawler_index, kor_check, influ_thresold):
     for item in items:
         # Only get 2017 data.
         created_at = item['taken_at']
-        if datetime.datetime.fromtimestamp(created_at).year != 2017 : continue
+        if datetime.datetime.fromtimestamp(created_at).year != 2017 : 
+            print 'not in 2017, created_at: ',created_at
+            continue
     
         user_id = item["user"]["username"]
 
