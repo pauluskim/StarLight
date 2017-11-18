@@ -181,7 +181,7 @@ def check_influencer(request):
             crawler_domain = ip_list[crawler_index]
             if recursive_step == '2': continue 
             recursive_step = str(int(recursive_step)+1)
-            requests.get(crawler_domain+"crawl/user_follow?next_function={}&target_user_pk={}&recursive_step={}".format("check_influencer", str(json_response["target_user_pk"]), recursive_step))
+            requests.get(crawler_domain+"crawl/user_follow?next_function={}&target_user_pk={}&recursive_step={}&kor_check={}".format("check_influencer", str(json_response["target_user_pk"]), recursive_step, kor_check))
             recursive_step = str(int(recursive_step)-1)
             crawler_index = (crawler_index + 1) % num_crawler
 
