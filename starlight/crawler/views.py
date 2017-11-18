@@ -301,7 +301,7 @@ def user_by_name(request):
     recursive = request.GET.get("recursive", 'False')
     kor_check = request.GET.get("kor_check", 't')
     influ_thresold = int(request.GET.get("influ_thresold", '10000'))
-    if User.objects.count() > 40000: return JsonResponse({'success': False, 'target_user_pk':"FULL"})
+    if User.objects.count() > 400000: return JsonResponse({'success': False, 'target_user_pk':"FULL"})
     if User.objects.filter(username = username).exists():
         if recursive == 'False':
             return JsonResponse({'success': True, 'target_user_pk':User.objects.get(username = username).user_pk})
@@ -566,4 +566,48 @@ def api_following(request, target_user_pk):
     
     return JsonResponse({'max_id': max_id})
 
+def from_file_user_by_name(request):
+    global host_ip
+    global ip_list
+    num_crawler = len(ip_list)
+    crawler_index= int(request.GET.get('crawler_index', '0'))
+    kor_check= request.GET.get('kor_check', 't')
+    influ_thresold = int(request.GET.get("influ_thresold", '1000'))
+
+    file_path = "/Users/jack/roka/starlight/starlight/data/animal_followed_group.sort"
+    with open(file_path, 'r') as read_f:
+        counter = 0 
+        len_file = '209667'
+        for line in read_f:
+            counter += 1
+            print counter, '/ '+len_file
+            line_list = line.strip().split(' ')
+            if len(line_list) < 2: continue
+            following_count = line_list[0]
+            username = line_list[1]
+            if following_count < 5: continue
+            
+            crawler_domain = ip_list[crawler_index]
+            
+            request_counter = 0 
+            while True:
+                response = requests.get(crawler_domain+"crawl/user_by_name?username={}&kor_check={}&influ_thresold={}".format(username, kor_check, influ_thresold))
+                try:
+                    json_response = json.loads(response.text)
+                    break
+                except:
+                    request_counter += 1
+                    if request_counter > 5: break
+                    print "Some json data is wrong."
+                    print response.text
+                    crawler_index = (crawler_index + 1) % num_crawler
+                    crawler_domain = ip_list[crawler_index]
+                    continue
+            if request_counter > 5: continue
+
+            if json_response["success"]:
+                target_user_pk = json_response["target_user_pk"]
+                influencer = User.objects.get(user_pk = target_user_pk)
+                influencer.remark = 'animal_followed_influencer'
+                influencer.save()
 
