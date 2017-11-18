@@ -90,6 +90,7 @@ def user_follow(request):
     next_function= request.GET.get('next_function', '')
     recursive_step= request.GET.get('recursive_step', '1')
     kor_check= request.GET.get('kor_check', 't')
+    influ_thresold = int(request.GET.get("influ_thresold", '10000'))
 
     num_crawler = len(ip_list)
     crawler_index = ip_list.index("http://"+host_ip+"/")
@@ -101,7 +102,7 @@ def user_follow(request):
         if target_username == "": return HttpResponseRedirect("/crawl/follow_list")
         
         #target_user_pk = user_by_name(target_username).user_pk
-        response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username={}&kor_check={}".format(target_username, kor_check))
+        response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username={}&kor_check={}&influ_thresold={}".format(target_username, kor_check, influ_thresold))
         json_response = json.loads(response.text)
 
         if json_response["success"]: 
@@ -126,7 +127,7 @@ def user_follow(request):
         crawler_index = (crawler_index + 1) % num_crawler
         crawler_domain = ip_list[crawler_index]
 
-    if next_function=='check_influencer': return HttpResponseRedirect('/crawl/check_influencer?object_pk={}&crawler_index={}&recursive_step={}&kor_check={}'.format(target_user_pk, crawler_index, recursive_step, kor_check))
+    if next_function=='check_influencer': return HttpResponseRedirect('/crawl/check_influencer?object_pk={}&crawler_index={}&recursive_step={}&kor_check={}&influ_thresold={}'.format(target_user_pk, crawler_index, recursive_step, kor_check, influ_thresold))
     else: return HttpResponseRedirect('/crawl/follow_list')
 
 
@@ -139,6 +140,7 @@ def check_influencer(request):
     crawler_index= int(request.GET.get('crawler_index', '0'))
     last_user_pk= request.GET.get('last_user_pk', '')
     kor_check= request.GET.get('kor_check', 't')
+    influ_thresold = int(request.GET.get("influ_thresold", '10000'))
     skip_flag = False
     if last_user_pk != '': skip_flag = True
 
@@ -157,7 +159,7 @@ def check_influencer(request):
         
         request_counter = 0 
         while True:
-            response = requests.get(crawler_domain+"crawl/user_by_name?recursive_step={}&recursive={}&username={}&kor_check={}".format(recursive_step, 'True',follower.username, kor_check))
+            response = requests.get(crawler_domain+"crawl/user_by_name?recursive_step={}&recursive={}&username={}&kor_check={}&influ_thresold={}".format(recursive_step, 'True',follower.username, kor_check, influ_thresold))
             try:
                 json_response = json.loads(response.text)
                 break
@@ -181,7 +183,7 @@ def check_influencer(request):
             crawler_domain = ip_list[crawler_index]
             if recursive_step == '2': continue 
             recursive_step = str(int(recursive_step)+1)
-            requests.get(crawler_domain+"crawl/user_follow?next_function={}&target_user_pk={}&recursive_step={}&kor_check={}".format("check_influencer", str(json_response["target_user_pk"]), recursive_step, kor_check))
+            requests.get(crawler_domain+"crawl/user_follow?next_function={}&target_user_pk={}&recursive_step={}&kor_check={}&influ_thresold={}".format("check_influencer", str(json_response["target_user_pk"]), recursive_step, kor_check, influ_thresold))
             recursive_step = str(int(recursive_step)-1)
             crawler_index = (crawler_index + 1) % num_crawler
 
@@ -298,6 +300,7 @@ def user_by_name(request):
     username = request.GET.get("username", "")
     recursive = request.GET.get("recursive", 'False')
     kor_check = request.GET.get("kor_check", 't')
+    influ_thresold = int(request.GET.get("influ_thresold", '10000'))
     if User.objects.count() > 40000: return JsonResponse({'success': False, 'target_user_pk':"FULL"})
     if User.objects.filter(username = username).exists():
         if recursive == 'False':
@@ -312,7 +315,7 @@ def user_by_name(request):
             print api.LastJson
             return JsonResponse({'success': False, 'target_user_pk':"API FAIL"})
 
-        if user_info["follower_count"] >= 5000:
+        if user_info["follower_count"] >= influ_thresold:
             if kor_check == 't':
                 if not is_korean(username): return JsonResponse({'success': False, 'target_user_pk': 'Not korean'})
             user = User(created_date=timezone.now())
@@ -395,10 +398,11 @@ def start_hashtag_posts(request):
     max_id = request.GET.get('max_id', '')
     crawler_index= int(request.GET.get('crawler_index', '0'))
     kor_check = request.GET.get('kor_check', 't')
+    influ_thresold = int(request.GET.get("influ_thresold", '10000'))
 
     while max_id != 'end':
         crawler_domain = ip_list[crawler_index]
-        response = requests.get(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}&kor_check={}".format(hashtag, max_id, crawler_index, kor_check))
+        response = requests.get(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}&kor_check={}&influ_thresold={}".format(hashtag, max_id, crawler_index, kor_check, influ_thresold))
         result = json.loads(response.text)
         if result['success']: max_id = result["next_max_id"]
         else: time.sleep(10)
@@ -414,6 +418,7 @@ def crawl_hashtag_posts(request):
     hashtag = request.GET.get("hashtag", '')
     max_id = request.GET.get('max_id', '')
     kor_check = request.GET.get('kor_check', 't')
+    influ_thresold = int(request.GET.get("influ_thresold", '10000'))
     crawler_index= int(request.GET.get('crawler_index', '0'))
     
     if max_id == "":
@@ -427,10 +432,10 @@ def crawl_hashtag_posts(request):
 
     if "ranked_items" in hashtag_metadata:
         items = hashtag_metadata["ranked_items"]
-        parse_item(items, crawler_index, kor_check)
+        parse_item(items, crawler_index, kor_check, influ_thresold)
     if "items" in hashtag_metadata:
         items = hashtag_metadata["items"]
-        parse_item(items, crawler_index, kor_check)
+        parse_item(items, crawler_index, kor_check, influ_thresold)
 
     if "next_max_id" in hashtag_metadata: 
         max_id = hashtag_metadata["next_max_id"]
@@ -439,7 +444,7 @@ def crawl_hashtag_posts(request):
         return JsonResponse({'success':True, 'next_max_id': 'end'})
 
 
-def parse_item(items, crawler_index, kor_check):
+def parse_item(items, crawler_index, kor_check, influ_thresold):
     global ip_list
     num_crawler = len(ip_list)
 
@@ -456,7 +461,7 @@ def parse_item(items, crawler_index, kor_check):
 
         crawler_index = (crawler_index + 1) % num_crawler
         crawler_domain = ip_list[crawler_index]
-        response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username={}&kor_check={}".format(user_id, kor_check))
+        response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username={}&kor_check={}&influ_thresold={}".format(user_id, kor_check, influ_thresold))
         user_info = json.loads(response.text)
         if not user_info["success"] : continue
 
