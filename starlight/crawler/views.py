@@ -6,6 +6,7 @@ sys.setdefaultencoding('utf-8')
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from crawler.models import Influencer, Post, User, Follow, Hashtag_Dictionary
+from django.db.models import Q
 import pdb, datetime, csv, os, sys, requests, json, time
 from django.utils import timezone
 from auth import *
@@ -449,15 +450,11 @@ def parse_item(items, crawler_index, kor_check, influ_thresold):
     num_crawler = len(ip_list)
 
     for item in items:
-        payload = {}
         # Only get 2017 data.
         created_at = item['taken_at']
-        payload['post_date'] = created_at
         if datetime.datetime.fromtimestamp(created_at).year != 2017 : continue
-
     
         user_id = item["user"]["username"]
-        payload['user_id'] = user_id
 
         crawler_index = (crawler_index + 1) % num_crawler
         crawler_domain = ip_list[crawler_index]
@@ -588,7 +585,6 @@ def from_file_user_by_name(request):
             if following_count < 5: continue
             
             crawler_domain = ip_list[crawler_index]
-            
             request_counter = 0 
             while True:
                 response = requests.get(crawler_domain+"crawl/user_by_name?username={}&kor_check={}&influ_thresold={}".format(username, kor_check, influ_thresold))
@@ -604,6 +600,7 @@ def from_file_user_by_name(request):
                     crawler_domain = ip_list[crawler_index]
                     continue
             if request_counter > 5: continue
+            crawler_index = (crawler_index + 1) % num_crawler
 
             if json_response["success"]:
                 target_user_pk = json_response["target_user_pk"]
@@ -611,3 +608,59 @@ def from_file_user_by_name(request):
                 influencer.remark = 'animal_followed_influencer'
                 influencer.save()
 
+def calculate_engagement(request):
+    global host_ip
+    global ip_list
+    num_crawler = len(ip_list)
+    crawler_index= int(request.GET.get('crawler_index', '0'))
+
+    users = User.objects.filter(Q(remark='animal_supporter') | Q(remark='animal_followed_influencer'))
+    for user in users:
+        crawler_domain = ip_list[crawler_index]
+        request_counter = 0 
+        while True:
+            response = requests.get(crawler_domain+"crawl/__a_engagement?user_pk={}".format(user.user_pk))
+            try:
+                json_response = json.loads(response.text)
+                break
+            except:
+                request_counter += 1
+                if request_counter > 5: break
+                print "Some json data is wrong."
+                print response.text
+                crawler_index = (crawler_index + 1) % num_crawler
+                crawler_domain = ip_list[crawler_index]
+                continue
+        if request_counter > 5: continue
+        crawler_index = (crawler_index + 1) % num_crawler
+
+    return JsonResponse({"success":True})
+
+
+def __a_engagement(request):
+    user_pk= request.GET.get('user_pk', '')
+    user = User.objects.get(user_pk = user_pk)
+    curl_url = "https://www.instagram.com/"+user.username+"/?__a=1"
+    response = requests.get(curl_url)
+    media_json = response.json()["user"]["media"]
+
+    comment_count = 0
+    likes_count = 0
+    views_count = 0
+    video_count = 0
+    post_count = 0 
+
+    for node in media_json["nodes"]:
+        post_count += 1
+        comment_count += node['comments']['count']
+        likes_count += node['likes']['count']
+        if node['is_video']:
+            video_count += 1
+            views_count += node['video_views']
+
+    user.num_commenters = float(comment_count) / post_count
+    user.num_likes = float(likes_count) / post_count
+    user.num_views = float(views_count) / video_count
+    user.num_engagement_rate = user.num_commenters + user.num_likes + user.num_views
+    user.save()
+    return JsonResponse({"success": True})
