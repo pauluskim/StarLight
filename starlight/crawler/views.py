@@ -412,6 +412,7 @@ def start_hashtag_posts(request):
             if result['success']: max_id = result["next_max_id"]
             else: time.sleep(10)
             crawler_index = (crawler_index + 1) % num_crawler
+        max_id =""
 
     return JsonResponse({'success':True})
 
