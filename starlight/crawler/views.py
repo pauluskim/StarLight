@@ -677,6 +677,6 @@ def __a_engagement(request):
     user.num_likes = num_likes
     user.num_views = num_views
 
-    user.num_engagement_rate = float(num_commenters + num_likes + num_views) / user.follower_count
+    user.engagement_rate = float(num_commenters + num_likes + num_views) / user.follower_count
     user.save()
     return JsonResponse({"success": True})
