@@ -663,15 +663,19 @@ def __a_engagement(request):
             views_count += node['video_views']
 
     if post_count > 0 :
-        user.num_commenters = float(comment_count) / post_count
-        user.num_likes = float(likes_count) / post_count
+        num_commenters = float(comment_count) / post_count
+        num_likes = float(likes_count) / post_count
     else:
-        user.num_commenters = 0
-        user.num_likes = 0
+        num_commenters = 0
+        num_likes = 0
     if video_count > 0 :
-        user.num_views = float(views_count) / video_count
+        num_views = float(views_count) / video_count
     else:
-        user.num_views = 0 
-    user.num_engagement_rate = user.num_commenters + user.num_likes + user.num_views
+        num_views = 0 
+
+    user.num_commenters = num_commenters
+    user.num_likes = num_likes
+    user.num_views = num_views
+    user.num_engagement_rate = num_commenters + num_likes + num_views
     user.save()
     return JsonResponse({"success": True})
