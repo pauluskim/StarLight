@@ -676,6 +676,10 @@ def __a_engagement(request):
     user.num_commenters = num_commenters
     user.num_likes = num_likes
     user.num_views = num_views
+    print 'commenter: ', num_commenters
+    print 'likes: ', num_likes
+    print 'views: ', num_views
+    print 'engagement_rate: ',num_commenters + num_likes + num_views 
     user.num_engagement_rate = num_commenters + num_likes + num_views
     user.save()
     return JsonResponse({"success": True})
