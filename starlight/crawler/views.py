@@ -401,13 +401,17 @@ def start_hashtag_posts(request):
     kor_check = request.GET.get('kor_check', 't')
     influ_thresold = int(request.GET.get("influ_thresold", '10000'))
 
-    while max_id != 'end':
-        crawler_domain = ip_list[crawler_index]
-        response = requests.get(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}&kor_check={}&influ_thresold={}".format(hashtag, max_id, crawler_index, kor_check, influ_thresold))
-        result = json.loads(response.text)
-        if result['success']: max_id = result["next_max_id"]
-        else: time.sleep(10)
-        crawler_index = (crawler_index + 1) % num_crawler
+
+    hashtag_list = hashtag.split(',')
+
+    for hashtag in hashtag_list:
+        while max_id != 'end':
+            crawler_domain = ip_list[crawler_index]
+            response = requests.get(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}&kor_check={}&influ_thresold={}".format(hashtag, max_id, crawler_index, kor_check, influ_thresold))
+            result = json.loads(response.text)
+            if result['success']: max_id = result["next_max_id"]
+            else: time.sleep(10)
+            crawler_index = (crawler_index + 1) % num_crawler
 
     return JsonResponse({'success':True})
 
