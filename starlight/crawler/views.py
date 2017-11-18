@@ -485,3 +485,85 @@ def parse_item(items, crawler_index, kor_check, influ_thresold):
             influencer.remark = url
             influencer.save()
 
+def following(request):
+    global host_ip
+    global ip_list
+
+    username= request.GET.get('username', '')
+    target_user_pk= request.GET.get('target_user_pk', '')
+    max_id= request.GET.get('max_id', '')
+    kor_check= request.GET.get('kor_check', 't')
+    influ_thresold = int(request.GET.get("influ_thresold", '0'))
+
+    num_crawler = len(ip_list)
+    crawler_index = ip_list.index("http://"+host_ip+"/")
+    #crawler_index = 0 
+    crawler_domain = ip_list[crawler_index]
+    # For develop in local.   
+
+    if target_user_pk == "":
+        if username == "": return JsonResponse({'success': False})
+        while True:
+            response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username={}&kor_check={}&influ_thresold={}".format(username, kor_check, influ_thresold))
+            json_response = json.loads(response.text)
+
+            if json_response["success"]: 
+                target_user_pk = json_response["target_user_pk"]
+                break
+            else:
+                crawler_index = (crawler_index + 1) % num_crawler
+                crawler_domain = ip_list[crawler_index]
+
+
+    while max_id != "end":
+        while True:
+            response = requests.get(crawler_domain+"crawl/api_following/"+str(target_user_pk)+"/?max_id={}".format(max_id))
+            try:
+                json_response = json.loads(response.text)
+                break
+            except:
+                print "Some json data is wrong."
+                print response
+                print response.text
+                crawler_index = (crawler_index + 1) % num_crawler
+                crawler_domain = ip_list[crawler_index]
+                continue
+            
+        max_id = json_response["max_id"]
+        crawler_index = (crawler_index + 1) % num_crawler
+        crawler_domain = ip_list[crawler_index]
+
+    return JsonResponse({"success": True})
+
+def api_following(request, target_user_pk):
+    max_id = request.GET.get('max_id', '')
+    try:
+        if max_id == "": api.getUserFollowings(target_user_pk)
+        else: api.getUserFollowings(target_user_pk, maxid=max_id)
+        following = api.LastJson
+    except:
+        print "api response is wrong so return."
+        return JsonResponse({'max_id': max_id})
+        
+    for each_following in following["users"]:
+        if Follow.objects.filter(user_pk = each_following["pk"], object_pk = target_user_pk, follow_status='ing').exists(): continue
+        follow = Follow(created_date=timezone.now())
+        follow.object_pk = target_user_pk
+        follow.follow_status = 'ing'
+        follow.username = each_following["username"]
+        follow.full_name = each_following["full_name"]
+        follow.user_pk = each_following["pk"]
+        follow.is_verified = each_following["is_verified"]
+        follow.is_private = each_following["is_private"]
+        if "is_favorite" in each_following: follow.is_favorite = each_following["is_favorite"]
+        else: follow.is_favorite = False
+        follow.save()
+    
+    if "next_max_id" in following:
+        max_id = following["next_max_id"]
+    else:
+        max_id = "end"
+    
+    return JsonResponse({'max_id': max_id})
+
+

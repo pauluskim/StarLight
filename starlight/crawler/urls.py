@@ -8,6 +8,8 @@ urlpatterns = [
     
     url(r'^crawl/user_follow$', views.user_follow, name='user_follow'),
     url(r'^crawl/followers/(?P<target_user_pk>[0-9]+)/$', views.followers, name='followers'),
+    url(r'^crawl/following$', views.following, name='crawl_following'),
+    url(r'^crawl/api_following/(?P<target_user_pk>[0-9]+)/$', views.api_following, name='following'),
     #url(r'^crawl/manager$', views.crawl_manager, name='crawl_manager'),
     url(r'^crawl/follow_list$', views.follow_list, name='follow_list'),
     url(r'^crawl/export_follow_csv$', views.export_follow_csv, name='export_follow_csv'),
