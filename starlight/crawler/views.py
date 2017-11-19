@@ -521,35 +521,46 @@ def following(request):
 
     if target_user_pk == "":
         if username == "": return JsonResponse({'success': False})
-        while True:
-            response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username={}&kor_check={}&influ_thresold={}".format(username, kor_check, influ_thresold))
-            json_response = json.loads(response.text)
-
-            if json_response["success"]: 
-                target_user_pk = json_response["target_user_pk"]
-                break
-            else:
-                crawler_index = (crawler_index + 1) % num_crawler
-                crawler_domain = ip_list[crawler_index]
-
-
-    while max_id != "end":
-        while True:
-            response = requests.get(crawler_domain+"crawl/api_following/"+str(target_user_pk)+"/?max_id={}".format(max_id))
-            try:
+        username_list = username.split(",")
+        target_user_pk_list = []
+        for username in username_list:
+            while True:
+                response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username={}&kor_check={}&influ_thresold={}".format(username, kor_check, influ_thresold))
                 json_response = json.loads(response.text)
-                break
-            except:
-                print "Some json data is wrong."
-                print response
-                print response.text
-                crawler_index = (crawler_index + 1) % num_crawler
-                crawler_domain = ip_list[crawler_index]
-                continue
-            
-        max_id = json_response["max_id"]
-        crawler_index = (crawler_index + 1) % num_crawler
-        crawler_domain = ip_list[crawler_index]
+
+                if json_response["success"]: 
+                    target_user_pk = json_response["target_user_pk"]
+                    target_user_pk_list.append(target_user_pk)
+                    break
+                else:
+                    crawler_index = (crawler_index + 1) % num_crawler
+                    crawler_domain = ip_list[crawler_index]
+    else:
+        target_user_pk_list = target_user_pk.split(",")
+
+    num_target_users = len(target_user_pk_list)
+    counter = 0
+    for target_user_pk in target_user_pk_list:
+        counter += 1
+        print counter, ' : ', num_target_users
+        while max_id != "end":
+            while True:
+                response = requests.get(crawler_domain+"crawl/api_following/"+str(target_user_pk)+"/?max_id={}".format(max_id))
+                try:
+                    json_response = json.loads(response.text)
+                    break
+                except:
+                    print "Some json data is wrong."
+                    print response
+                    print response.text
+                    crawler_index = (crawler_index + 1) % num_crawler
+                    crawler_domain = ip_list[crawler_index]
+                    continue
+                
+            max_id = json_response["max_id"]
+            crawler_index = (crawler_index + 1) % num_crawler
+            crawler_domain = ip_list[crawler_index]
+        max_id = ''
 
     return JsonResponse({"success": True})
 
