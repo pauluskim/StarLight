@@ -603,18 +603,22 @@ def from_file_user_by_name(request):
     kor_check= request.GET.get('kor_check', 't')
     influ_thresold = int(request.GET.get("influ_thresold", '1000'))
 
-    file_path = "/Users/jack/roka/starlight/starlight/data/animal_followed_group.sort"
+    file_path = "/Users/jack/roka/starlight/starlight/data/animal_hashtag_potential_influ.sort"
     with open(file_path, 'r') as read_f:
         counter = 0 
-        len_file = '209667'
+        ############################
+        len_file = '207848'
+        ############################
         for line in read_f:
             counter += 1
             print counter, '/ '+len_file
             line_list = line.strip().split(' ')
             if len(line_list) < 2: continue
-            following_count = line_list[0]
+            following_count = int(line_list[0])
             username = line_list[1]
+            ############################
             if following_count < 5: continue
+            ############################
             
             crawler_domain = ip_list[crawler_index]
             request_counter = 0 
@@ -637,7 +641,7 @@ def from_file_user_by_name(request):
             if json_response["success"]:
                 target_user_pk = json_response["target_user_pk"]
                 influencer = User.objects.get(user_pk = target_user_pk)
-                influencer.remark = 'animal_followed_influencer'
+                influencer.remark = 'animal_hashtag_potential_influencer'
                 influencer.save()
 
 def calculate_engagement(request):
@@ -646,7 +650,8 @@ def calculate_engagement(request):
     num_crawler = len(ip_list)
     crawler_index= int(request.GET.get('crawler_index', '0'))
 
-    users = User.objects.filter(Q(remark='animal_supporter') | Q(remark='animal_followed_influencer'))
+    #users = User.objects.filter(Q(remark='animal_supporter') | Q(remark='animal_followed_influencer'))
+    users = User.objects.filter(remark='animal_hashtag_potential_influencer')
     num_users = users.count()
     counter = 0
     for user in users:
