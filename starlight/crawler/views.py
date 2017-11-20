@@ -694,6 +694,8 @@ def __a_engagement(request):
     user = User.objects.get(user_pk = user_pk)
     followers = Follow.objects.filter(follow_status='ed', object_pk = user_pk)
     follower_names = [follower.username for follower in followers]
+    if len(follower_names) == 0 :
+        return JsonResponse({"success":"no followers"})
 
     curl_url = "https://www.instagram.com/"+user.username+"/?__a=1"
     response = requests.get(curl_url)
