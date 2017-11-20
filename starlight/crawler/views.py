@@ -654,7 +654,7 @@ def calculate_engagement(request):
     num_crawler = len(ip_list)
     crawler_index= int(request.GET.get('crawler_index', '0'))
     check_follow = request.GET.get('check_follow', 'f')
-    target_user_pk = int(request.GET.get('target_user_pk', ''))
+    target_user_pk = request.GET.get('target_user_pk', '')
 
     #users = User.objects.filter(Q(remark='animal_supporter') | Q(remark='animal_followed_influencer'))
     #users = User.objects.filter(remark='animal_hashtag_potential_influencer')
@@ -690,7 +690,7 @@ def calculate_engagement(request):
 
 
 def __a_engagement(request):
-    user_pk= request.GET.get('user_pk', '')
+    user_pk= int(request.GET.get('user_pk', ''))
     user = User.objects.get(user_pk = user_pk)
     followers = Follow.objects.filter(follow_status='ed', object_pk = user_pk)
     follower_names = [follower.username for follower in followers]
