@@ -671,7 +671,7 @@ def calculate_engagement(request):
         crawler_domain = ip_list[crawler_index]
         request_counter = 0 
         while True:
-            response = requests.get(crawler_domain+"crawl/__a_engagement?user_pk={}&check_follow={}".format(user.user_pk, check_follow))
+            response = requests.get(crawler_domain+"crawl/__a_engagement?user_pk={}&check_follow={}".format(user_pk, check_follow))
             try:
                 json_response = json.loads(response.text)
                 break
