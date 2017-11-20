@@ -115,7 +115,11 @@ def user_follow(request):
     else:
         target_user_pk_list = target_user_pk.split(",")
     
+    num_target_users = len(target_user_pk_list)
+    counter = 0 
     for target_user_pk in target_user_pk_list:
+        counter += 1
+        print counter, ' / ', num_target_users
         while max_id != "end":
             while True:
                 response = requests.get(crawler_domain+"crawl/followers/"+str(target_user_pk)+"/?max_id={}&recursive_step={}".format(max_id, recursive_step))
@@ -136,7 +140,7 @@ def user_follow(request):
         max_id = ""
 
     if next_function=='check_influencer': return HttpResponseRedirect('/crawl/check_influencer?object_pk={}&crawler_index={}&recursive_step={}&kor_check={}&influ_thresold={}'.format(target_user_pk, crawler_index, recursive_step, kor_check, influ_thresold))
-    else: return HttpResponseRedirect('/crawl/follow_list')
+    else: return JsonResponse({'sucess': True})
 
 
 def check_influencer(request):
@@ -649,18 +653,30 @@ def calculate_engagement(request):
     global ip_list
     num_crawler = len(ip_list)
     crawler_index= int(request.GET.get('crawler_index', '0'))
+    check_follow = int(request.GET.get('check_follow', 'f'))
 
     #users = User.objects.filter(Q(remark='animal_supporter') | Q(remark='animal_followed_influencer'))
-    users = User.objects.filter(remark='animal_hashtag_potential_influencer')
-    num_users = users.count()
+    #users = User.objects.filter(remark='animal_hashtag_potential_influencer')
+
+    data_path = '/Users/jack/roka/starlight/starlight/data/'
+    user_pks = []
+    with open(data_path+"animal_potential_influ.simple", 'r') as f:
+        for line in f:
+            line_list = line.strip().split(',')
+            user_pks.append(line_list[1])
+
+    requests.get(crawler_domain+"crawl/user_follow?target_user_pk={}".format(",".join(user_pks)))
+
+    #num_users = users.count()
+    num_users = len(user_pks)
     counter = 0
-    for user in users:
+    for user_pk in user_pks:
         counter += 1
         print counter , ' / ', num_users
         crawler_domain = ip_list[crawler_index]
         request_counter = 0 
         while True:
-            response = requests.get(crawler_domain+"crawl/__a_engagement?user_pk={}".format(user.user_pk))
+            response = requests.get(crawler_domain+"crawl/__a_engagement?user_pk={}&check_follow={}".format(user.user_pk, check_follow))
             try:
                 json_response = json.loads(response.text)
                 break
@@ -681,6 +697,9 @@ def calculate_engagement(request):
 def __a_engagement(request):
     user_pk= request.GET.get('user_pk', '')
     user = User.objects.get(user_pk = user_pk)
+    followers = Follow.objects.filter(follow_status='ed', object_pk = user_pk)
+    follower_names = [follower.username for follower in followers]
+
     curl_url = "https://www.instagram.com/"+user.username+"/?__a=1"
     response = requests.get(curl_url)
     media_json = response.json()["user"]["media"]
@@ -717,3 +736,4 @@ def __a_engagement(request):
     user.engagement_rate = float(num_commenters + num_likes + num_views) / user.follower_count
     user.save()
     return JsonResponse({"success": True})
+
