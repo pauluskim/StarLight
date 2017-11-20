@@ -722,7 +722,7 @@ def __a_engagement(request):
         api.getMediaLikers(str(media_id))
         response_json = api.LastJson
         post_liker_set = set()
-        likers = response_json["users"]]
+        likers = response_json["users"]
         for liker in likers:
             post_liker_set.add(liker["username"])
 
