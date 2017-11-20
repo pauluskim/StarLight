@@ -654,18 +654,13 @@ def calculate_engagement(request):
     num_crawler = len(ip_list)
     crawler_index= int(request.GET.get('crawler_index', '0'))
     check_follow = int(request.GET.get('check_follow', 'f'))
+    target_user_pk = int(request.GET.get('target_user_pk', ''))
 
     #users = User.objects.filter(Q(remark='animal_supporter') | Q(remark='animal_followed_influencer'))
     #users = User.objects.filter(remark='animal_hashtag_potential_influencer')
 
-    data_path = '/Users/jack/roka/starlight/starlight/data/'
-    user_pks = []
-    with open(data_path+"animal_potential_influ.simple", 'r') as f:
-        for line in f:
-            line_list = line.strip().split(',')
-            user_pks.append(line_list[1])
+    user_pks = target_user_pk.split(',')
 
-    requests.get(crawler_domain+"crawl/user_follow?target_user_pk={}".format(",".join(user_pks)))
 
     #num_users = users.count()
     num_users = len(user_pks)
@@ -709,21 +704,38 @@ def __a_engagement(request):
     views_count = 0
     video_count = 0
     post_count = 0 
+    num_follower_likers = 0
 
     for node in media_json["nodes"]:
         post_count += 1
+        if not "id" in node: continue
+        media_id = node["id"]
+
         comment_count += node['comments']['count']
         likes_count += node['likes']['count']
         if node['is_video']:
             video_count += 1
             views_count += node['video_views']
 
+        api.getMediaLikers(str(media_id))
+        response_json = api.LastJson
+        post_liker_set = set()
+        likers = response_json["users"]]
+        for liker in likers:
+            post_liker_set.add(liker["username"])
+
+        follower_likers = post_liker_set.intersection(follower_names)
+        num_follower_likers += len(follower_likers)
+
     if post_count > 0 :
         num_commenters = float(comment_count) / post_count
         num_likes = float(likes_count) / post_count
+        num_follower_likes = float(num_follower_likers) / post_count
     else:
         num_commenters = 0
         num_likes = 0
+        num_follower_likes = 0
+
     if video_count > 0 :
         num_views = float(views_count) / video_count
     else:
@@ -732,6 +744,7 @@ def __a_engagement(request):
     user.num_commenters = num_commenters
     user.num_likes = num_likes
     user.num_views = num_views
+    user.num_follower_likes = num_follower_likes
 
     user.engagement_rate = float(num_commenters + num_likes + num_views) / user.follower_count
     user.save()

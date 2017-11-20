@@ -23,7 +23,9 @@ class User(models.Model):
     
     engagement_rate = models.DecimalField(max_digits=22, decimal_places=20, null=True)
     num_likes = models.IntegerField(null=True)
+    num_follower_likes = models.IntegerField(null=True)
     num_commenters = models.IntegerField(null=True)
+    num_follower_commenters = models.IntegerField(null=True)
     num_views = models.IntegerField(null=True)
     remark = models.TextField(null=True)
 
