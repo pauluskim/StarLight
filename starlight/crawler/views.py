@@ -15,8 +15,7 @@ from langdetect import *
 sys.path.append(os.path.abspath('./crawler/Instagram-API-python'))
 from InstagramAPI import InstagramAPI
 host_ip = str(requests.get('http://ip.42.pl/raw').text)
-#ip_list = ['http://localhost:8000/']
-ip_list = ['http://52.52.196.98/', 'http://13.57.80.18/', 'http://13.56.107.109/', 'http://52.53.201.131/', 'http://54.183.193.51/']
+crawler_domain = "http://"+host_ip + "/"
 
 api = InstagramAPI(api_id, api_pwd)
 api.s.proxies = proxies 
@@ -83,8 +82,6 @@ def export_follow_csv(request):
     return response
 
 def user_follow(request):
-    global host_ip
-    global ip_list
 
     target_username= request.GET.get('username', '')
     target_user_pk= request.GET.get('target_user_pk', '')
@@ -94,10 +91,6 @@ def user_follow(request):
     kor_check= request.GET.get('kor_check', 't')
     influ_thresold = int(request.GET.get("influ_thresold", '10000'))
 
-    num_crawler = len(ip_list)
-    #crawler_index = ip_list.index("http://"+host_ip+"/")
-    crawler_index = 0 
-    crawler_domain = ip_list[crawler_index]
     # For develop in local.   
 
     if target_user_pk == "":
@@ -131,26 +124,18 @@ def user_follow(request):
                     print "Some json data is wrong."
                     print response
                     print response.text
-                    #crawler_index = (crawler_index + 1) % num_crawler
-                    #crawler_domain = ip_list[crawler_index]
                     continue
                 
             max_id = json_response["max_id"]
-            #crawler_index = (crawler_index + 1) % num_crawler
-            #crawler_domain = ip_list[crawler_index]
         max_id = ""
 
-    if next_function=='check_influencer': return HttpResponseRedirect('/crawl/check_influencer?object_pk={}&crawler_index={}&recursive_step={}&kor_check={}&influ_thresold={}'.format(target_user_pk, crawler_index, recursive_step, kor_check, influ_thresold))
+    if next_function=='check_influencer': return HttpResponseRedirect('/crawl/check_influencer?object_pk={}&recursive_step={}&kor_check={}&influ_thresold={}'.format(target_user_pk, recursive_step, kor_check, influ_thresold))
     else: return JsonResponse({'sucess': True})
 
 
 def check_influencer(request):
-    global host_ip
-    global ip_list
-    num_crawler = len(ip_list)
     object_pk= request.GET.get('object_pk', '')
     recursive_step = request.GET.get('recursive_step', '1')
-    crawler_index= int(request.GET.get('crawler_index', '0'))
     last_user_pk= request.GET.get('last_user_pk', '')
     kor_check= request.GET.get('kor_check', 't')
     influ_thresold = int(request.GET.get("influ_thresold", '10000'))
@@ -168,8 +153,6 @@ def check_influencer(request):
                 print follower.username
             continue
 
-        crawler_domain = ip_list[crawler_index]
-        
         request_counter = 0 
         while True:
             response = requests.get(crawler_domain+"crawl/user_by_name?recursive_step={}&recursive={}&username={}&kor_check={}&influ_thresold={}".format(recursive_step, 'True',follower.username, kor_check, influ_thresold))
@@ -181,24 +164,19 @@ def check_influencer(request):
                 if request_counter > 5: break
                 print "Some json data is wrong."
                 print response.text
-                crawler_index = (crawler_index + 1) % num_crawler
-                crawler_domain = ip_list[crawler_index]
                 continue
 
         if request_counter > 5: continue
         print str(index)+ " / " + str(num_followers)
-        crawler_index = (crawler_index + 1) % num_crawler
         if json_response["success"] == False: 
             if json_response["target_user_pk"] == "Not Influencer": follower.delete()
             continue 
         else:
             print "Caught Influencer."
-            crawler_domain = ip_list[crawler_index]
             if recursive_step == '2': continue 
             recursive_step = str(int(recursive_step)+1)
             requests.get(crawler_domain+"crawl/user_follow?next_function={}&target_user_pk={}&recursive_step={}&kor_check={}&influ_thresold={}".format("check_influencer", str(json_response["target_user_pk"]), recursive_step, kor_check, influ_thresold))
             recursive_step = str(int(recursive_step)-1)
-            crawler_index = (crawler_index + 1) % num_crawler
 
     return JsonResponse({'success': True})
 
@@ -233,9 +211,6 @@ def start_hashtag_dictionary(request):
     # Take a follower to get hashtag list.
 
 def hashtag_dictionary(username, user_pk):
-    global ip_list
-    num_crawler = len(ip_list)
-    crawler_index = 0
 
     curl_url = "https://www.instagram.com/"+username+"/?__a=1"
     response = requests.get(curl_url, proxies=proxies)
@@ -256,9 +231,7 @@ def hashtag_dictionary(username, user_pk):
             for hashtag in caption_hashtag_list:
                 save_hashtag_dic(user_pk, hashtag, url_code)
 
-        crawler_domain = ip_list[crawler_index]
         requests.get("{crawler_domain}crawl/api_hashtag_dic?media_id={media_id}&user_pk={user_pk}&url_code={url_code}".format(crawler_domain=crawler_domain, media_id=media_id, user_pk=user_pk, url_code=url_code))
-        crawler_index = (crawler_index + 1) % num_crawler
 
 
 def api_hashtag_dic(request):
@@ -404,12 +377,9 @@ def follow_list(request):
     return render(request, 'crawler/follow_list.html', {'follow_list': follow_list})
 
 def start_hashtag_posts(request):
-    global ip_list
-    num_crawler = len(ip_list)
 
     hashtag = request.GET.get("hashtag", '')
     max_id = request.GET.get('max_id', '')
-    crawler_index= int(request.GET.get('crawler_index', '0'))
     kor_check = request.GET.get('kor_check', 't')
     influ_thresold = int(request.GET.get("influ_thresold", '10000'))
     post_count = int(request.GET.get("post_count", '0'))
@@ -419,12 +389,10 @@ def start_hashtag_posts(request):
 
     for hashtag in hashtag_list:
         while max_id != 'end':
-            crawler_domain = ip_list[crawler_index]
-            response = requests.get(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&crawler_index={}&kor_check={}&influ_thresold={}&post_count={}".format(hashtag, max_id, crawler_index, kor_check, influ_thresold, post_count))
+            response = requests.get(crawler_domain+"crawl/hashtag_posts?hashtag={}&max_id={}&kor_check={}&influ_thresold={}&post_count={}".format(hashtag, max_id, kor_check, influ_thresold, post_count))
             result = json.loads(response.text)
             if result['success']: max_id = result["next_max_id"]
             else: time.sleep(10)
-            crawler_index = (crawler_index + 1) % num_crawler
             post_count = result["post_count"]
         print "post_count: ", post_count
         max_id =""
@@ -434,14 +402,11 @@ def start_hashtag_posts(request):
 
     
 def crawl_hashtag_posts(request):
-    global ip_list
-    num_crawler = len(ip_list)
     
     hashtag = request.GET.get("hashtag", '')
     max_id = request.GET.get('max_id', '')
     kor_check = request.GET.get('kor_check', 't')
     influ_thresold = int(request.GET.get("influ_thresold", '10000'))
-    crawler_index= int(request.GET.get('crawler_index', '0'))
     post_count = int(request.GET.get("post_count", '0'))
     
     if max_id == "":
@@ -455,10 +420,10 @@ def crawl_hashtag_posts(request):
 
     if "ranked_items" in hashtag_metadata:
         items = hashtag_metadata["ranked_items"]
-        post_count = parse_item(items, crawler_index, kor_check, influ_thresold, post_count)
+        post_count = parse_item(items, kor_check, influ_thresold, post_count)
     if "items" in hashtag_metadata:
         items = hashtag_metadata["items"]
-        post_count = parse_item(items, crawler_index, kor_check, influ_thresold, post_count)
+        post_count = parse_item(items, kor_check, influ_thresold, post_count)
 
     if "next_max_id" in hashtag_metadata: 
         max_id = hashtag_metadata["next_max_id"]
@@ -467,9 +432,7 @@ def crawl_hashtag_posts(request):
         return JsonResponse({'success':True, 'next_max_id': 'end', 'post_count': post_count})
 
 
-def parse_item(items, crawler_index, kor_check, influ_thresold, post_count):
-    global ip_list
-    num_crawler = len(ip_list)
+def parse_item(items, kor_check, influ_thresold, post_count):
 
     for item in items:
         # Only get 2017 data.
@@ -481,8 +444,6 @@ def parse_item(items, crawler_index, kor_check, influ_thresold, post_count):
     
         user_id = item["user"]["username"]
 
-        crawler_index = (crawler_index + 1) % num_crawler
-        crawler_domain = ip_list[crawler_index]
         response = requests.get(crawler_domain+"crawl/user_by_name?recursive=False&username={}&kor_check={}&influ_thresold={}".format(user_id, kor_check, influ_thresold))
         user_info = json.loads(response.text)
         if not user_info["success"] : continue
@@ -509,8 +470,6 @@ def parse_item(items, crawler_index, kor_check, influ_thresold, post_count):
     return post_count
 
 def following(request):
-    global host_ip
-    global ip_list
 
     username= request.GET.get('username', '')
     target_user_pk= request.GET.get('target_user_pk', '')
@@ -518,10 +477,6 @@ def following(request):
     kor_check= request.GET.get('kor_check', 't')
     influ_thresold = int(request.GET.get("influ_thresold", '0'))
 
-    num_crawler = len(ip_list)
-    crawler_index = ip_list.index("http://"+host_ip+"/")
-    #crawler_index = 0 
-    crawler_domain = ip_list[crawler_index]
     # For develop in local.   
 
     if target_user_pk == "":
@@ -537,9 +492,6 @@ def following(request):
                     target_user_pk = json_response["target_user_pk"]
                     target_user_pk_list.append(target_user_pk)
                     break
-                else:
-                    crawler_index = (crawler_index + 1) % num_crawler
-                    crawler_domain = ip_list[crawler_index]
     else:
         target_user_pk_list = target_user_pk.split(",")
 
@@ -558,13 +510,9 @@ def following(request):
                     print "Some json data is wrong."
                     print response
                     print response.text
-                    crawler_index = (crawler_index + 1) % num_crawler
-                    crawler_domain = ip_list[crawler_index]
                     continue
                 
             max_id = json_response["max_id"]
-            crawler_index = (crawler_index + 1) % num_crawler
-            crawler_domain = ip_list[crawler_index]
         max_id = ''
 
     return JsonResponse({"success": True})
@@ -601,10 +549,6 @@ def api_following(request, target_user_pk):
     return JsonResponse({'max_id': max_id})
 
 def from_file_user_by_name(request):
-    global host_ip
-    global ip_list
-    num_crawler = len(ip_list)
-    crawler_index= int(request.GET.get('crawler_index', '0'))
     kor_check= request.GET.get('kor_check', 't')
     influ_thresold = int(request.GET.get("influ_thresold", '1000'))
 
@@ -625,7 +569,6 @@ def from_file_user_by_name(request):
             if following_count < 5: continue
             ############################
             
-            crawler_domain = ip_list[crawler_index]
             request_counter = 0 
             while True:
                 response = requests.get(crawler_domain+"crawl/user_by_name?username={}&kor_check={}&influ_thresold={}".format(username, kor_check, influ_thresold))
@@ -637,11 +580,8 @@ def from_file_user_by_name(request):
                     if request_counter > 5: break
                     print "Some json data is wrong."
                     print response.text
-                    crawler_index = (crawler_index + 1) % num_crawler
-                    crawler_domain = ip_list[crawler_index]
                     continue
             if request_counter > 5: continue
-            crawler_index = (crawler_index + 1) % num_crawler
 
             if json_response["success"]:
                 target_user_pk = json_response["target_user_pk"]
@@ -650,10 +590,6 @@ def from_file_user_by_name(request):
                 influencer.save()
 
 def calculate_engagement(request):
-    global host_ip
-    global ip_list
-    num_crawler = len(ip_list)
-    crawler_index= int(request.GET.get('crawler_index', '0'))
     check_follow = request.GET.get('check_follow', 'f')
     target_user_pk = request.GET.get('target_user_pk', '')
 
@@ -662,14 +598,12 @@ def calculate_engagement(request):
 
     user_pks = target_user_pk.split(',')
 
-
     #num_users = users.count()
     num_users = len(user_pks)
     counter = 0
     for user_pk in user_pks:
         counter += 1
         print counter , ' / ', num_users
-        crawler_domain = ip_list[crawler_index]
         request_counter = 0 
         while True:
             response = requests.get(crawler_domain+"crawl/__a_engagement?user_pk={}&check_follow={}".format(user_pk, check_follow))
@@ -681,12 +615,8 @@ def calculate_engagement(request):
                 if request_counter > 5: break
                 print "Some json data is wrong."
                 print response.text
-                crawler_index = (crawler_index + 1) % num_crawler
-                crawler_domain = ip_list[crawler_index]
                 continue
         if request_counter > 5: continue
-        crawler_index = (crawler_index + 1) % num_crawler
-
     return JsonResponse({"success":True})
 
 
