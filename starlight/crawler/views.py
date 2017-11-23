@@ -14,13 +14,14 @@ from langdetect import *
 
 sys.path.append(os.path.abspath('./crawler/Instagram-API-python'))
 from InstagramAPI import InstagramAPI
-
-api = InstagramAPI(api_id, api_pwd)
-api.login() # login
-
 host_ip = str(requests.get('http://ip.42.pl/raw').text)
 #ip_list = ['http://localhost:8000/']
 ip_list = ['http://52.52.196.98/', 'http://13.57.80.18/', 'http://13.56.107.109/', 'http://52.53.201.131/', 'http://54.183.193.51/']
+
+api = InstagramAPI(api_id, api_pwd)
+#api.s.proxies = {"http": 'http://{}:{}@us-wa.proxymesh.com:31280'.format(proxy_id,proxy_pw), "https": 'http://{}:{}@us-wa.proxymesh.com:31280'.format(proxy_id,proxy_pw)}}
+api.login() # login
+
 # 2, 1, 3, 5, 4
     
 def influencer_list(request):
@@ -721,6 +722,14 @@ def __a_engagement(request):
 
         api.getMediaLikers(str(media_id))
         response_json = api.LastJson
+
+        # After using this code for handling exception.
+        #try:
+        #    user_info = api.LastJson["user"]
+        #except:
+        #    print api.LastJson
+        #    return JsonResponse({'success': False, 'target_user_pk':"API FAIL"})
+
         post_liker_set = set()
         likers = response_json["users"]
         for liker in likers:
