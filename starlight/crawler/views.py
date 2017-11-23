@@ -19,7 +19,7 @@ host_ip = str(requests.get('http://ip.42.pl/raw').text)
 ip_list = ['http://52.52.196.98/', 'http://13.57.80.18/', 'http://13.56.107.109/', 'http://52.53.201.131/', 'http://54.183.193.51/']
 
 api = InstagramAPI(api_id, api_pwd)
-#api.s.proxies = {"http": 'http://{}:{}@us-wa.proxymesh.com:31280'.format(proxy_id,proxy_pw), "https": 'http://{}:{}@us-wa.proxymesh.com:31280'.format(proxy_id,proxy_pw)}}
+api.s.proxies = proxies 
 api.login() # login
 
 # 2, 1, 3, 5, 4
@@ -95,8 +95,8 @@ def user_follow(request):
     influ_thresold = int(request.GET.get("influ_thresold", '10000'))
 
     num_crawler = len(ip_list)
-    crawler_index = ip_list.index("http://"+host_ip+"/")
-    #crawler_index = 0 
+    #crawler_index = ip_list.index("http://"+host_ip+"/")
+    crawler_index = 0 
     crawler_domain = ip_list[crawler_index]
     # For develop in local.   
 
@@ -131,13 +131,13 @@ def user_follow(request):
                     print "Some json data is wrong."
                     print response
                     print response.text
-                    crawler_index = (crawler_index + 1) % num_crawler
-                    crawler_domain = ip_list[crawler_index]
+                    #crawler_index = (crawler_index + 1) % num_crawler
+                    #crawler_domain = ip_list[crawler_index]
                     continue
                 
             max_id = json_response["max_id"]
-            crawler_index = (crawler_index + 1) % num_crawler
-            crawler_domain = ip_list[crawler_index]
+            #crawler_index = (crawler_index + 1) % num_crawler
+            #crawler_domain = ip_list[crawler_index]
         max_id = ""
 
     if next_function=='check_influencer': return HttpResponseRedirect('/crawl/check_influencer?object_pk={}&crawler_index={}&recursive_step={}&kor_check={}&influ_thresold={}'.format(target_user_pk, crawler_index, recursive_step, kor_check, influ_thresold))
@@ -208,7 +208,7 @@ def start_hashtag_dictionary(request):
     hashtag_dictionary(username, influencer.user_pk)
 
     curl_url = "https://www.instagram.com/"+username+"/?__a=1"
-    response = requests.get(curl_url)
+    response = requests.get(curl_url, proxies=proxies)
     media_json = response.json()["user"]["media"]
 
     follower_set = set()
@@ -238,7 +238,7 @@ def hashtag_dictionary(username, user_pk):
     crawler_index = 0
 
     curl_url = "https://www.instagram.com/"+username+"/?__a=1"
-    response = requests.get(curl_url)
+    response = requests.get(curl_url, proxies=proxies)
     try:
         media_json = response.json()["user"]["media"]
     except:
@@ -356,7 +356,7 @@ def user_by_name(request):
 
 def is_korean(username):
     curl_url = "https://www.instagram.com/"+username+"/?__a=1"
-    response = requests.get(curl_url)
+    response = requests.get(curl_url, proxies=proxies)
     media_json = response.json()["user"]["media"]
     for node in media_json["nodes"]:
         try:
@@ -699,7 +699,7 @@ def __a_engagement(request):
         return JsonResponse({"success":"no followers"})
 
     curl_url = "https://www.instagram.com/"+user.username+"/?__a=1"
-    response = requests.get(curl_url)
+    response = requests.get(curl_url, proxies=proxies)
     media_json = response.json()["user"]["media"]
 
     comment_count = 0

@@ -60,6 +60,9 @@ class InstagramAPI:
         self.setUser(username, password)
         self.isLoggedIn = False
         self.LastResponse = None
+        self.s = requests.Session()
+        # if you need proxy make something like this:
+        # self.s.proxies = {"https" : "http://proxyip:proxyport"}
 
     def setUser(self, username, password):
         self.username = username
@@ -68,9 +71,6 @@ class InstagramAPI:
 
     def login(self, force = False):
         if (not self.isLoggedIn or force):
-            self.s = requests.Session()
-            # if you need proxy make something like this:
-            # self.s.proxies = {"https" : "http://proxyip:proxyport"}
             if (self.SendRequest('si/fetch_headers/?challenge_type=signup&guid=' + self.generateUUID(False), None, True)):
 
                 data = {'phone_id'   : self.generateUUID(True),
