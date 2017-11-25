@@ -716,7 +716,7 @@ def posts(request):
             post.num_likes      = node['likes']['count']
             post.num_commenters = node['comments']['count']
             if node['is_video']: post.num_views = node['video_views']
-            post.captions       = node["caption"]
+            #post.captions       = node["caption"]
             post.save()
 
         if media_json["page_info"]["has_next_page"]:
