@@ -622,11 +622,15 @@ def calculate_engagement(request):
 
 def __a_engagement(request):
     user_pk= int(request.GET.get('user_pk', ''))
-    user = User.objects.get(user_pk = user_pk)
-    followers = Follow.objects.filter(follow_status='ed', object_pk = user_pk)
-    follower_names = [follower.username for follower in followers]
-    if len(follower_names) == 0 :
-        return JsonResponse({"success":"no followers"})
+    check_follow = request.GET.get('check_follow', 'f')
+
+    if check_follow == 't':
+        user = User.objects.get(user_pk = user_pk)
+        followers = Follow.objects.filter(follow_status='ed', object_pk = user_pk)
+        follower_names = [follower.username for follower in followers]
+
+        if len(follower_names) == 0 :
+            return JsonResponse({"success":"no followers"})
 
     curl_url = "https://www.instagram.com/"+user.username+"/?__a=1"
     response = requests.get(curl_url, proxies=proxies)
@@ -690,4 +694,38 @@ def __a_engagement(request):
     user.engagement_rate = float(num_commenters + num_likes + num_views) / user.follower_count
     user.save()
     return JsonResponse({"success": True})
+
+def posts(request):
+    username = request.GET.get('username', '')
+
+    do_crawl = True
+    max_id = ""
+
+    counter = 0
+    while do_crawl:
+        counter += 1
+        print "max_id counter: ", counter
+
+        curl_url = "https://www.instagram.com/"+username+"/?__a=1&max_id="+max_id
+        response = requests.get(curl_url, proxies=proxies)
+        media_json = response.json()["user"]["media"]
+
+        for node in media_json["nodes"]:
+            post = Post(created_date=timezone.now())
+            post.user_id        = username
+            post.num_likes      = node['likes']['count']
+            post.num_commenters = node['comments']['count']
+            if node['is_video']: post.num_views = node['video_views']
+            post.captions       = node["caption"]
+            post.save()
+
+        if media_json["page_info"]["has_next_page"]:
+            max_id = media_json["page_info"]["end_cursor"]
+            do_crawl = True
+        else:
+            print "Happy finished"
+            do_crawl = False
+
+    return JsonResponse({"success": True})
+
 
