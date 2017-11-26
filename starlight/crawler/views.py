@@ -728,4 +728,24 @@ def posts(request):
 
     return JsonResponse({"success": True})
 
+def SendDM(request):
+    user_pk_list = request.GET.get('user_pk_list', '')
+    user_pk_list = user_pk_list.split(',')
+
+    progress = 0 
+    total_users = len(user_pk_list)
+    for user_pk in user_pk_list:
+        progress += 1
+        print 'Progress: ', progress, '/', total_users
+        msg = "Test"
+
+        while True:
+            api.sendMessage(str(user_pk), msg)
+            if api.LastResponse.status_code != 200:
+                print(api.LastJson)
+                print "Fail to Send"
+                continue
+            else: break
+    return JsonResponse({"success":True})
+
 

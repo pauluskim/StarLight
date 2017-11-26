@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'^crawl/calculate_engagement$', views.calculate_engagement, name='calculate_engagement'),
     url(r'^crawl/__a_engagement$', views.__a_engagement, name='__a_engagement'),
     url(r'^crawl/posts$', views.posts, name='posts'),
+    url(r'^crawl/SendDM$', views.SendDM, name='SendDM'),
     #url(r'^crawl/manager$', views.crawl_manager, name='crawl_manager'),
     url(r'^crawl/follow_list$', views.follow_list, name='follow_list'),
     url(r'^crawl/export_follow_csv$', views.export_follow_csv, name='export_follow_csv'),

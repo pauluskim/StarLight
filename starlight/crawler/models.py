@@ -20,6 +20,7 @@ class User(models.Model):
     is_favorite = models.BooleanField()
     external_url = models.TextField(null=True)
     created_date = models.DateTimeField(default=timezone.now)
+    count_DM_sent = models.IntegerField(null=True) 
     
     engagement_rate = models.DecimalField(max_digits=22, decimal_places=20, null=True)
     num_likes = models.IntegerField(null=True)
