@@ -745,7 +745,10 @@ def SendDM(request):
                 print(api.LastJson)
                 print "Fail to Send"
                 continue
-            else: break
+            else: 
+                user = User.objects.get(user_pk = user_pk)
+                user.count_DM_sent += 1
+                user.save()
+                break
     return JsonResponse({"success":True})
-
 
