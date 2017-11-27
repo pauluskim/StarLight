@@ -14,6 +14,7 @@ from langdetect import *
 
 sys.path.append(os.path.abspath('./crawler/Instagram-API-python'))
 from InstagramAPI import InstagramAPI
+from DM_format import *
 host_ip = str(requests.get('http://ip.42.pl/raw').text)
 crawler_domain = "http://"+host_ip + "/"
 
@@ -730,6 +731,7 @@ def posts(request):
 
 def SendDM(request):
     user_pk_list = request.GET.get('user_pk_list', '')
+    by_hashtag = request.GET.get('by_hashtag', 'f')
     user_pk_list = user_pk_list.split(',')
 
     progress = 0 
@@ -737,7 +739,12 @@ def SendDM(request):
     for user_pk in user_pk_list:
         progress += 1
         print 'Progress: ', progress, '/', total_users
-        msg = "Test"
+
+        user = User.objects.get(user_pk = user_pk)
+        if by_hashtag == 'f':
+            msg = graph_msg(user.username)
+        else:
+            msg = hastag_msg(user.username)
 
         while True:
             api.sendMessage(str(user_pk), msg)
@@ -746,7 +753,6 @@ def SendDM(request):
                 print "Fail to Send"
                 continue
             else: 
-                user = User.objects.get(user_pk = user_pk)
                 user.count_DM_sent += 1
                 user.save()
                 break
