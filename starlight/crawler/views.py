@@ -756,6 +756,7 @@ def SendDM(request):
             else: 
                 user.count_DM_sent += 1
                 user.save()
+                time.sleep(15)
                 break
     return JsonResponse({"success":True})
 
