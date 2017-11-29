@@ -751,7 +751,7 @@ def SendDM(request):
             if api.LastResponse.status_code != 200:
                 print(api.LastJson)
                 print "Fail to Send So We need to wait 20 min"
-                time.sleep(1200)
+                time.sleep(60*60*2)
                 continue
             else: 
                 user.count_DM_sent += 1
