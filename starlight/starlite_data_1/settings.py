@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'crawler',
+    'engine',
 ]
 
 MIDDLEWARE_CLASSES = [

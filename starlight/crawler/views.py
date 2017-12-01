@@ -477,6 +477,7 @@ def following(request):
     max_id= request.GET.get('max_id', '')
     kor_check= request.GET.get('kor_check', 't')
     influ_thresold = int(request.GET.get("influ_thresold", '0'))
+    campaign= request.GET.get('campaign', '')
 
     # For develop in local.   
 
@@ -501,6 +502,11 @@ def following(request):
     for target_user_pk in target_user_pk_list:
         counter += 1
         print counter, ' : ', num_target_users
+        if campaign != '':
+            user = User.objects.get(user_pk = target_user_pk)
+            user.campaign_kind = campaign
+            user.save()
+
         while max_id != "end":
             while True:
                 response = requests.get(crawler_domain+"crawl/api_following/"+str(target_user_pk)+"/?max_id={}".format(max_id))

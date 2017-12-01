@@ -29,6 +29,7 @@ class User(models.Model):
     num_follower_commenters = models.IntegerField(null=True)
     num_views = models.IntegerField(null=True)
     remark = models.TextField(null=True)
+    campaign_kind = models.TextField(null=True)
 
 
 class Follow(models.Model):
