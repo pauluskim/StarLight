@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from crawler.models import Influencer, Post, User, Follow, Hashtag_Dictionary
 from django.db.models import Q
-import pdb, datetime, csv, os, sys, requests, json, time
+import pdb, datetime, csv, os, sys, requests, json, time, yaml
 from django.utils import timezone
 from auth import *
 from langdetect import *
@@ -15,6 +15,7 @@ from langdetect import *
 sys.path.append(os.path.abspath('./crawler/Instagram-API-python'))
 from InstagramAPI import InstagramAPI
 from DM_format import *
+import networkx as nx
 host_ip = str(requests.get('http://ip.42.pl/raw').text)
 crawler_domain = "http://"+host_ip + "/"
 
@@ -630,9 +631,9 @@ def calculate_engagement(request):
 def __a_engagement(request):
     user_pk= int(request.GET.get('user_pk', ''))
     check_follow = request.GET.get('check_follow', 'f')
+    user = User.objects.get(user_pk = user_pk)
 
     if check_follow == 't':
-        user = User.objects.get(user_pk = user_pk)
         followers = Follow.objects.filter(follow_status='ed', object_pk = user_pk)
         follower_names = [follower.username for follower in followers]
 
@@ -765,4 +766,47 @@ def SendDM(request):
                 time.sleep(15)
                 break
     return JsonResponse({"success":True})
+
+def pagerank(request):
+    user_pk_set = set(User.objects.filter(campaign_kind='dog', follower_count__gte=10000).values_list('user_pk', flat=True))
+    G = nx.DiGraph()
+    counter = 0 
+    if not os.path.exists('dog_graph.yaml') :
+        for user_pk in user_pk_set:
+            counter += 1
+            print "progress: ", counter, '/', len(user_pk_set)
+            following_list = Follow.objects.filter(object_pk=user_pk, follow_status='ing').values_list('user_pk', flat=True)
+            meaningful_following_set = user_pk_set.intersection(following_list)
+            edge_list = []
+
+            if len(meaningful_following_set) == 0: continue
+
+            for followed_user_pk in meaningful_following_set:
+                edge_list.append((followed_user_pk, user_pk))
+            G.add_edges_from(edge_list)
+
+            user = User.objects.get(user_pk = user_pk)
+            G.node[user_pk]['username'] = user.username
+            G.node[user_pk]['follower_count'] = user.follower_count
+
+
+        nx.write_yaml(G, 'dog_graph.yaml')
+
+    G = nx.read_yaml('dog_graph.yaml')
+    pk_username = nx.get_node_attributes(G, 'username')
+    pk_follower = nx.get_node_attributes(G, 'follower_count')
+
+    pagerank_dic = nx.pagerank(G)
+    ranked_list = sorted(pagerank_dic.items(), key=lambda x:-x[1])
+    ranked = [(pk_username[user_pk], user_pk, point) for user_pk, point in ranked_list[:100]]
+
+    follower_pagerank_dic = nx.pagerank(G, personalization=pk_follower, nstart=pk_follower)
+    follower_ranked_list = sorted(follower_pagerank_dic.items(), key=lambda x:-x[1])
+    follower_ranked = [(pk_username[user_pk], user_pk, point) for user_pk, point in follower_ranked_list[:100]]
+
+    return JsonResponse({"success": True, "basic": ranked, "follower": follower_ranked})
+
+
+
+
 

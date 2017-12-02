@@ -1,5 +1,6 @@
 *.pyc
 *.swp
+*.yaml
 *~
 __pycache__
 auth.py
