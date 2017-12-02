@@ -662,23 +662,24 @@ def __a_engagement(request):
             video_count += 1
             views_count += node['video_views']
 
-        api.getMediaLikers(str(media_id))
-        response_json = api.LastJson
+        if check_follow == 't':
+            api.getMediaLikers(str(media_id))
+            response_json = api.LastJson
 
-        # After using this code for handling exception.
-        #try:
-        #    user_info = api.LastJson["user"]
-        #except:
-        #    print api.LastJson
-        #    return JsonResponse({'success': False, 'target_user_pk':"API FAIL"})
+            # After using this code for handling exception.
+            #try:
+            #    user_info = api.LastJson["user"]
+            #except:
+            #    print api.LastJson
+            #    return JsonResponse({'success': False, 'target_user_pk':"API FAIL"})
 
-        post_liker_set = set()
-        likers = response_json["users"]
-        for liker in likers:
-            post_liker_set.add(liker["username"])
+            post_liker_set = set()
+            likers = response_json["users"]
+            for liker in likers:
+                post_liker_set.add(liker["username"])
 
-        follower_likers = post_liker_set.intersection(follower_names)
-        num_follower_likers += len(follower_likers)
+            follower_likers = post_liker_set.intersection(follower_names)
+            num_follower_likers += len(follower_likers)
 
     if post_count > 0 :
         num_commenters = float(comment_count) / post_count
