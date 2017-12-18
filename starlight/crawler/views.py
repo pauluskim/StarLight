@@ -10,14 +10,18 @@ from django.db.models import Q
 import pdb, datetime, csv, os, sys, requests, json, time, yaml
 from django.utils import timezone
 from auth import *
+from local_data import *
 from langdetect import *
 
 sys.path.append(os.path.abspath('./crawler/Instagram-API-python'))
 from InstagramAPI import InstagramAPI
 from DM_format import *
 import networkx as nx
-host_ip = str(requests.get('http://ip.42.pl/raw').text)
-crawler_domain = "http://"+host_ip + "/"
+from networkx.readwrite import json_graph
+import http_server
+#host_ip = str(requests.get('http://ip.42.pl/raw').text)
+#crawler_domain = "http://"+host_ip + "/"
+crawler_domain = "http://localhost:8000/"
 
 api = InstagramAPI(api_id, api_pwd)
 api.s.proxies = proxies 
@@ -768,44 +772,141 @@ def SendDM(request):
                 break
     return JsonResponse({"success":True})
 
-def pagerank(request):
-    user_pk_set = set(User.objects.filter(campaign_kind='dog', follower_count__gte=10000).values_list('user_pk', flat=True))
+def make_graph(user_pk_set, graph_name="no-title.yaml", save=True):
     G = nx.DiGraph()
     counter = 0 
-    if not os.path.exists('dog_graph.yaml') :
-        for user_pk in user_pk_set:
-            counter += 1
-            print "progress: ", counter, '/', len(user_pk_set)
-            following_list = Follow.objects.filter(object_pk=user_pk, follow_status='ing').values_list('user_pk', flat=True)
-            meaningful_following_set = user_pk_set.intersection(following_list)
-            edge_list = []
+    for user_pk in user_pk_set:
+        counter += 1
+        print "progress: ", counter, '/', len(user_pk_set)
 
-            if len(meaningful_following_set) == 0: continue
+        user = User.objects.get(user_pk = user_pk)
 
-            for followed_user_pk in meaningful_following_set:
-                edge_list.append((followed_user_pk, user_pk))
-            G.add_edges_from(edge_list)
+        G.add_node(user_pk)
+        G.node[user_pk]['username'] = user.username
+        G.node[user_pk]['follower_count'] = user.follower_count
+        G.node[user_pk]['engagement_rate'] = float(user.num_commenters+user.num_likes) / user.follower_count
 
-            user = User.objects.get(user_pk = user_pk)
-            G.node[user_pk]['username'] = user.username
-            G.node[user_pk]['follower_count'] = user.follower_count
+        following_list = Follow.objects.filter(object_pk=user_pk, follow_status='ing').values_list('user_pk', flat=True)
+        meaningful_following_set = user_pk_set.intersection(following_list)
+        if len(meaningful_following_set) == 0: continue
 
+        edge_list = []
+        for followed_user_pk in meaningful_following_set:
+            edge_list.append((user_pk, followed_user_pk))
+        G.add_edges_from(edge_list)
 
-        nx.write_yaml(G, 'dog_graph.yaml')
+    if save:
+        nx.write_yaml(G, graph_name)
+    else: return G
 
-    G = nx.read_yaml('dog_graph.yaml')
+def apply_dynamic_pagerank(G):
     pk_username = nx.get_node_attributes(G, 'username')
     pk_follower = nx.get_node_attributes(G, 'follower_count')
+    pk_engage_rate = {user_pk: float(engage_rate) for user_pk, engage_rate in nx.get_node_attributes(G, 'engagement_rate').iteritems()}
 
     pagerank_dic = nx.pagerank(G)
     ranked_list = sorted(pagerank_dic.items(), key=lambda x:-x[1])
-    ranked = [(pk_username[user_pk], user_pk, point) for user_pk, point in ranked_list[:100]]
+    ranked = [(pk_username[user_pk], user_pk, point, pk_follower[user_pk], pk_engage_rate[user_pk]) for user_pk, point in ranked_list[:100]]
 
     follower_pagerank_dic = nx.pagerank(G, personalization=pk_follower, nstart=pk_follower)
     follower_ranked_list = sorted(follower_pagerank_dic.items(), key=lambda x:-x[1])
-    follower_ranked = [(pk_username[user_pk], user_pk, point) for user_pk, point in follower_ranked_list[:100]]
+    follower_ranked = [(pk_username[user_pk], user_pk, point, pk_follower[user_pk], pk_engage_rate[user_pk]) for user_pk, point in follower_ranked_list[:100]]
 
-    return JsonResponse({"success": True, "basic": ranked, "follower": follower_ranked})
+    try:
+        engage_rate_pagerank_dic = nx.pagerank(G, personalization=pk_engage_rate, nstart=pk_engage_rate)
+        engage_rate_ranked_list = sorted(engage_rate_pagerank_dic.items(), key=lambda x:-x[1])
+        engage_rate_ranked = [(pk_username[user_pk], user_pk, point, pk_follower[user_pk], pk_engage_rate[user_pk]) for user_pk, point in engage_rate_ranked_list[:100]]
+    except:
+        pdb.set_trace()
+
+    return ranked, follower_ranked, engage_rate_ranked
+
+def pagerank(request):
+    user_pk_set = set(User.objects.filter(campaign_kind='dog', follower_count__gte=10000, user_pk__in=basic_pk_list).values_list('user_pk', flat=True))
+    hashtag_user_pk_set = set(User.objects.filter(campaign_kind='dog', follower_count__gte=10000, user_pk__in=hashtag_pk_list).values_list('user_pk', flat=True))
+
+
+    if not os.path.exists('dog_graph.yaml') : make_graph(user_pk_set, 'dog_graph.yaml')
+    if not os.path.exists('hashtag_dog_graph.yaml') : make_graph(hashtag_user_pk_set, 'hashtag_dog_graph.yaml')
+
+    G = nx.read_yaml('dog_graph.yaml')
+    hashtag_G = nx.read_yaml('hashtag_dog_graph.yaml')
+
+    ranked, follower_ranked, engage_rate_ranked = apply_dynamic_pagerank(G)
+    hashtag_ranked, hashtag_follower_ranked, hashtag_engage_rate_ranked = apply_dynamic_pagerank(hashtag_G)
+
+    return JsonResponse({"success": True, "basic": ranked, "follower": follower_ranked, "engage_rate": engage_rate_ranked,\
+            "hash_basic": hashtag_ranked, "hash_follower": hashtag_follower_ranked, "hash_engage_rate": hashtag_engage_rate_ranked})
+
+
+def diversity(request):
+    user_pk_list = request.GET.get('user_pk_list', '')
+    user_pk_list = [float(ele) for ele in user_pk_list.split(',')]
+    pk_pk_diversity = {}
+    counter = 0
+    for p in user_pk_list:
+        counter += 1
+        print counter, '/', len(user_pk_list)
+        for q in user_pk_list:
+            if p == q: continue
+            p_username = User.objects.get(user_pk=p).username
+            q_username = User.objects.get(user_pk=q).username
+            if p_username in pk_pk_diversity:
+                if q_username not in pk_pk_diversity[p_username]:
+                    q_follower_set  = set(Follow.objects.filter(object_pk=q, follow_status='ed').values_list('user_pk', flat=True))
+                    p_follower_set  = set(Follow.objects.filter(object_pk=p, follow_status='ed').values_list('user_pk', flat=True))
+                    if len(p_follower_set) == 0 or len(q_follower_set) ==0: continue
+                    union           = p_follower_set.union(q_follower_set)
+                    intersection    = p_follower_set.intersection(q_follower_set)
+                    diversity       = float(len(intersection))/len(union)
+                    pk_pk_diversity[p_username][q_username] = diversity
+                    if q_username in pk_pk_diversity:
+                        pk_pk_diversity[q_username][p_username] = diversity
+                    else:
+                        pk_pk_diversity[q_username] = dict()
+                        pk_pk_diversity[q_username][p_username] = diversity
+            else:
+                p_follower_set  = set(Follow.objects.filter(object_pk=p, follow_status='ed').values_list('user_pk', flat=True))
+                q_follower_set  = set(Follow.objects.filter(object_pk=q, follow_status='ed').values_list('user_pk', flat=True))
+                if len(p_follower_set) == 0 or len(q_follower_set) ==0: continue
+                union           = p_follower_set.union(q_follower_set)
+                intersection    = p_follower_set.intersection(q_follower_set)
+                diversity       = float(len(intersection))/len(union)
+                pk_pk_diversity[p_username] = dict()
+                pk_pk_diversity[p_username][q_username] = diversity
+                if q_username in pk_pk_diversity:
+                    pk_pk_diversity[q_username][p_username] = diversity
+                else:
+                    pk_pk_diversity[q_username] = dict()
+                    pk_pk_diversity[q_username][p_username] = diversity
+
+    return JsonResponse({"success": True, "diversity":pk_pk_diversity})
+
+
+def draw_graph(request):
+    user_pk_list = request.GET.get('user_pk_list', '')
+    user_pk_set = set(user_pk_list.split(','))
+
+    G = make_graph(user_pk_set, "no-title.yaml", True)
+    return JsonResponse({"success": True})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
