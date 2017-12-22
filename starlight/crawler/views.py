@@ -10,7 +10,7 @@ from django.db.models import Q
 import pdb, datetime, csv, os, sys, requests, json, time, yaml
 from django.utils import timezone
 from auth import *
-from local_data import *
+#from local_data import *
 from langdetect import *
 
 sys.path.append(os.path.abspath('./crawler/Instagram-API-python'))
@@ -18,7 +18,7 @@ from InstagramAPI import InstagramAPI
 from DM_format import *
 import networkx as nx
 from networkx.readwrite import json_graph
-import http_server
+#import http_server
 #host_ip = str(requests.get('http://ip.42.pl/raw').text)
 #crawler_domain = "http://"+host_ip + "/"
 crawler_domain = "http://localhost:8000/"
