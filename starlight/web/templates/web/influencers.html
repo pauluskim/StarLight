@@ -1,0 +1,46 @@
+{% extends 'web/base.html' %}
+
+{% block content %}
+    <nav class="navbar sticky-top navbar-light bg-faded header_bar">
+      <a class="navbar-brand logo" href="#">Starlight</a>
+      <a class="navbar-brand" href="/" style='font-size:13px;font-weight:100;color:#fefefe'>Browse Other Topics</a>
+    </nav>
+    <div>
+        <div class='company_name'>{{ company }}</div>
+    </div>
+    <table class="table" style='background-color:#2a2825;'>
+        <thead style='color:#b6b19d'>
+            <tr>
+                <td colspan='2' style='text-align:center;font-weight:bold;'>
+                Top Chart(updated weekly)
+                </td>
+            </tr>
+        </thead>
+        <tbody style='color:#fefefe;'>
+            {% for follow in influencers %}
+                <tr>
+                    <td>@{{ follow.username }}</td>
+                    <td>{{ follow.user_pk }}</td>
+                </tr>
+            {% endfor%}
+        </tbody>
+    </table>
+    <div style='padding:12px;'>
+        <div class='desc_1' style='color:black;'>Get the top chart for your product</div>
+        <form>
+          <div class="form-group">
+            <input type="text" class="form-control" id="product_name" placeholder="Your product(brand, product name)" style='font-size:14px;height:45px;'>
+          </div>
+          <div class="form-group">
+            <input type="email" class="form-control" id="email" aria-describedby="emailHelp" placeholder="Your email(you'll receive weekly update emails)" style='font-size:12px;height:45px;'>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control" id="username" placeholder="Your name(let's get to know each other)" style='font-size:14px;height:45px;'>
+          </div>
+          <button type="submit" class="landing_btn btn btn-primary">FIND NOW!</button>
+        </form>
+    </div>
+{% endblock %}
+
+
+

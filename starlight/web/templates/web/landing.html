@@ -1,0 +1,47 @@
+{% extends 'web/base.html' %}
+
+{% block content %}
+    <div class='image_container'>
+        <img src="https://firebasestorage.googleapis.com/v0/b/starlight-47d76.appspot.com/o/paris2.jpg?alt=media&token=cc3f8396-8019-44b2-9f8c-365981dac33b" style='max-width:100%;'>
+        <div class='tag' style='top:80px;font-size:43px;'>Starlight</div>
+        <div class='tag' style='top:150px;font-size:18px;color:#e8c169;'>Best Instagram Influencers<br>just for your product.</div>
+        <div class='tag' style='top:218px;font-size:11px;color:#fff;'>Starlight delivers weekly updates on the top influencer chart, customized for your product.</div>
+    </div>
+    <div style='background-color:#2a2825;padding:12px;'>
+        <div class='desc_1'>Let us tell you who are the best influencers for your product.</div>
+        <form>
+          <div class="form-group">
+            <input type="text" class="form-control" id="product_name" placeholder="Your product(brand, product name)" style='font-size:14px;height:45px;'>
+          </div>
+          <div class="form-group">
+            <input type="email" class="form-control" id="email" aria-describedby="emailHelp" placeholder="Your email(you'll receive weekly update emails)" style='font-size:12px;height:45px;'>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control" id="username" placeholder="Your name(let's get to know each other)" style='font-size:14px;height:45px;'>
+          </div>
+          <button type="submit" class="landing_btn btn btn-primary">FIND NOW!</button>
+        </form>
+    </div>
+    <div>
+        <div style='font-weight:800;font-size:27px;padding:20px;'>DISCOVER<br>BEST INFLUENCERS</div>
+        <div class="container" style='padding:7px;'>
+            <div class="row" style='margin-bottom:7px;'>
+                <a href='/influencers' class="col-6 left_card">
+                    <div class='image_container'>
+                        <img src="https://firebasestorage.googleapis.com/v0/b/starlight-47d76.appspot.com/o/paris2.jpg?alt=media&token=cc3f8396-8019-44b2-9f8c-365981dac33b" style='max-width:100%;'>
+                        <div class='tag' style='top:84px;font-size:1px;color:#fff;'>last updated:<br>26 nov 2017</div>
+                    </div>
+                </a>
+                <a href='/influencers' class="col-6 right_card">
+                    <div class='image_container'>
+                        <img src="https://firebasestorage.googleapis.com/v0/b/starlight-47d76.appspot.com/o/paris2.jpg?alt=media&token=cc3f8396-8019-44b2-9f8c-365981dac33b" style='max-width:100%;'>
+                        <div class='tag' style='top:84px;font-size:1px;color:#fff;'>last updated:<br>26 nov 2017</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+

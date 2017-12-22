@@ -2,7 +2,7 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-    url(r'^$', views.influencer_list, name='influencer_list'),
+    #url(r'^$', views.influencer_list, name='influencer_list'),
     url(r'^crawl/hashtag_posts$', views.crawl_hashtag_posts, name='crawl_hashtag_posts'),
     url(r'^crawl/start_hashtag_posts$', views.start_hashtag_posts, name='start_hashtag_posts'),
     

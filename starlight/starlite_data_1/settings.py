@@ -82,9 +82,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'starlight',
-        'USER': 'root',
-        'PASSWORD': 'jack',
-        'HOST': '127.0.0.1',
+        'USER': 'jack',
+        'PASSWORD': 'anjgkfurh',
+        'HOST': '52.52.199.209',
+        #'USER': 'root',
+        #'PASSWORD': 'jack',
+        #'HOST': '127.0.0.1',
         'PORT': '3306',
 
     }
