@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'crawler',
     'engine',
     'web',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE_CLASSES = [

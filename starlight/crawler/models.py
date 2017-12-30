@@ -5,6 +5,13 @@ from django.db import models
 # Create your models here.
 from django.utils import timezone
 
+class ScoreBoard(models.Model):
+    user_pk = models.BigIntegerField(db_index=True)
+    brandname = models.CharField(max_length=200, db_index=True)
+    page_rank = models.DecimalField(max_digits=22, decimal_places=20, null=True)
+    graph_type = models.CharField(max_length=10, db_index=True) # hashtag or basic. 
+    created_date = models.DateTimeField(default=timezone.now)
+
 class User(models.Model):
     username = models.CharField(max_length=200, db_index=True)
     usertags_count = models.IntegerField(null=True)

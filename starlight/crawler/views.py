@@ -5,7 +5,7 @@ sys.setdefaultencoding('utf-8')
 
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
-from crawler.models import Influencer, Post, User, Follow, Hashtag_Dictionary
+from crawler.models import Influencer, Post, User, Follow, Hashtag_Dictionary, ScoreBoard
 from django.db.models import Q
 import pdb, datetime, csv, os, sys, requests, json, time, yaml
 from django.utils import timezone
@@ -812,19 +812,33 @@ def apply_dynamic_pagerank(G):
     follower_ranked_list = sorted(follower_pagerank_dic.items(), key=lambda x:-x[1])
     follower_ranked = [(pk_username[user_pk], user_pk, point, pk_follower[user_pk], pk_engage_rate[user_pk]) for user_pk, point in follower_ranked_list[:100]]
 
-    try:
-        engage_rate_pagerank_dic = nx.pagerank(G, personalization=pk_engage_rate, nstart=pk_engage_rate)
-        engage_rate_ranked_list = sorted(engage_rate_pagerank_dic.items(), key=lambda x:-x[1])
-        engage_rate_ranked = [(pk_username[user_pk], user_pk, point, pk_follower[user_pk], pk_engage_rate[user_pk]) for user_pk, point in engage_rate_ranked_list[:100]]
-    except:
-        pdb.set_trace()
+    engage_rate_pagerank_dic = nx.pagerank(G, personalization=pk_engage_rate, nstart=pk_engage_rate)
+    engage_rate_ranked_list = sorted(engage_rate_pagerank_dic.items(), key=lambda x:-x[1])
+    engage_rate_ranked = [(pk_username[user_pk], user_pk, point, pk_follower[user_pk], pk_engage_rate[user_pk]) for user_pk, point in engage_rate_ranked_list[:100]]
 
     return ranked, follower_ranked, engage_rate_ranked
 
-def pagerank(request):
-    user_pk_set = set(User.objects.filter(campaign_kind='dog', follower_count__gte=10000, user_pk__in=basic_pk_list).values_list('user_pk', flat=True))
-    hashtag_user_pk_set = set(User.objects.filter(campaign_kind='dog', follower_count__gte=10000, user_pk__in=hashtag_pk_list).values_list('user_pk', flat=True))
+def register_on_scoreboard(score_list, graph_type, brandname):
+    for username, user_pk, point, follower, engage_rate in score_list:
+        if ScoreBoard.objects.filter(user_pk = user_pk, brandname=brandname, graph_type=graph_type).exists():
+            score_row = ScoreBoard.objects.get(user_pk = user_pk, brandname=brandname, graph_type=graph_type)
+            score_row.page_rank = float(point)
+            score_row.save()
 
+        else:
+            score_row = ScoreBoard(created_date=timezone.now())
+            score_row.user_pk = int(user_pk)
+            score_row.brandname = brandname
+            score_row.page_rank = float(point)
+            score_row.graph_type = graph_type
+            score_row.save()
+
+def pagerank(request):
+    brandname = request.GET.get('brandname', 'dog')
+
+    user_pk_set = set(User.objects.filter(campaign_kind='dog').order_by('-follower_count')[:100].values_list('user_pk', flat=True))
+    # After log campaign in campaign_kind of user table such as 'dog_basic' or 'dog_hashtag'
+    hashtag_user_pk_set = set(User.objects.filter(campaign_kind='dog').order_by('-follower_count')[:100].values_list('user_pk', flat=True))
 
     if not os.path.exists('dog_graph.yaml') : make_graph(user_pk_set, 'dog_graph.yaml')
     if not os.path.exists('hashtag_dog_graph.yaml') : make_graph(hashtag_user_pk_set, 'hashtag_dog_graph.yaml')
@@ -835,8 +849,10 @@ def pagerank(request):
     ranked, follower_ranked, engage_rate_ranked = apply_dynamic_pagerank(G)
     hashtag_ranked, hashtag_follower_ranked, hashtag_engage_rate_ranked = apply_dynamic_pagerank(hashtag_G)
 
-    return JsonResponse({"success": True, "basic": ranked, "follower": follower_ranked, "engage_rate": engage_rate_ranked,\
-            "hash_basic": hashtag_ranked, "hash_follower": hashtag_follower_ranked, "hash_engage_rate": hashtag_engage_rate_ranked})
+    register_on_scoreboard(ranked, 'basic', brandname)
+    register_on_scoreboard(hashtag_ranked, 'hashtag', brandname)
+
+    return JsonResponse({"success": True})
 
 
 def diversity(request):
@@ -889,26 +905,5 @@ def draw_graph(request):
 
     G = make_graph(user_pk_set, "no-title.yaml", True)
     return JsonResponse({"success": True})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

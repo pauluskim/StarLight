@@ -8,10 +8,7 @@ from django.utils import timezone
 
 from crawler.models import *
 
-class Product(models.Model):
-    name = models.CharField(max_length=200)
-
 class Subscriber(models.Model):
-    product_id = models.BigIntegerField(db_index=True)
+    product = models.CharField(max_length=200)
     email = models.EmailField()
     first_name = models.CharField(max_length=200)
